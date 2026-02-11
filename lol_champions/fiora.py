@@ -17,6 +17,8 @@ class Fiora(Champion):
         super().__init__(
             base_AD=66,
             AD_scaling=3.3,
+            base_AP=0,
+            AP_scaling=0,
             base_HP=620,
             HP_scaling=99,
             base_AR=33,
@@ -32,21 +34,57 @@ class Fiora(Champion):
     def level_ability(self, ability: str) -> bool:
         """Level up a specific ability.
         
+        Requires an available skill point. Ultimate (R) can only be leveled
+        at levels 6, 11, and 16.
+        
         Args:
             ability: The ability to level up ('Q', 'W', 'E', or 'R')
             
         Returns:
             True if successful, False otherwise
         """
+        if self.skill_points <= 0:
+            print(f"No skill points available! Level up to gain skill points.")
+            return False
+        
+        # Check ultimate level restrictions
+        if ability == 'R':
+            if self.level < 6:
+                print("Ultimate can only be learned at level 6 or higher!")
+                return False
+            if self.R_ability.current_level == 0 and self.level < 6:
+                print("Ultimate unlocks at level 6!")
+                return False
+            if self.R_ability.current_level == 1 and self.level < 11:
+                print("Ultimate rank 2 unlocks at level 11!")
+                return False
+            if self.R_ability.current_level == 2 and self.level < 16:
+                print("Ultimate rank 3 unlocks at level 16!")
+                return False
+        
+        # Try to level the ability
+        success = False
         if ability == 'Q':
-            return self.Q_ability.level_up()
+            success = self.Q_ability.level_up()
         elif ability == 'W':
-            return self.W_ability.level_up()
+            success = self.W_ability.level_up()
         elif ability == 'E':
-            return self.E_ability.level_up()
+            success = self.E_ability.level_up()
         elif ability == 'R':
-            return self.R_ability.level_up()
-        return False
+            success = self.R_ability.level_up()
+        
+        # Consume skill point if successful
+        if success:
+            self.skill_points -= 1
+            ability_obj = getattr(self, f"{ability}_ability")
+            print(f"Leveled up {ability_obj.name} to rank {ability_obj.current_level}! "
+                  f"Skill points remaining: {self.skill_points}")
+        else:
+            if ability in ['Q', 'W', 'E', 'R']:
+                ability_obj = getattr(self, f"{ability}_ability")
+                print(f"{ability_obj.name} is already at max level!")
+        
+        return success
     
     def passive(self, target_max_hp: float) -> Dict[str, Union[float, str]]:
         """Duelist's Dance - Hitting a vital deals true damage, heals, and grants movement speed.
