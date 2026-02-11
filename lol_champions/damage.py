@@ -3,7 +3,7 @@
 All formulas sourced from https://wiki.leagueoflegends.com/en-us/
 """
 
-from typing import Dict, Any
+from typing import Dict, Any, List
 
 
 # Type alias for dicts returned by champion ability methods and rune procs
@@ -179,4 +179,145 @@ def calculate_damage(
         "damage_reduction_pct": reduction_pct,
         "damage_amp": damage_amp,
         "total_damage": total_damage,
+    }
+
+
+# ─── COMBO CALCULATOR ───
+
+# Steps that count as on-hit (trigger PtA stacks, Grasp proc).
+# Fiora Q applies on-hit effects in LoL, so it counts.
+ON_HIT_STEPS = {"AA", "Q", "E"}
+
+
+def _resolve_step(champion, step: str, target_max_hp: float) -> dict:
+    """Map a combo step name to an ability_data dict."""
+    step = step.upper()
+    if step == "AA":
+        return champion.auto_attack()
+    if step == "PASSIVE":
+        return champion.passive(target_max_hp=target_max_hp)
+    if step in ("Q", "W", "E"):
+        return getattr(champion, step)()
+    return {"error": f"Unknown step: {step}"}
+
+
+def calculate_combo(
+    champion,
+    target,
+    steps: List[str],
+    rune=None,
+) -> Dict[str, Any]:
+    """Calculate total damage from a combo sequence.
+
+    Tracks rune state through the combo:
+    - PtA: procs on 3rd on-hit, then 8% damage amp on all subsequent steps.
+    - Conqueror: +2 stacks per damaging step (melee). At 12 stacks grants
+      bonus AD and heals 8% of post-mitigation damage.
+    - Grasp: first on-hit deals bonus magic damage and heals.
+    - HoB: noted but no per-step damage modification.
+
+    On-hit steps (stack PtA / trigger Grasp): AA, Q, E.
+
+    Args:
+        champion: Champion instance (e.g. Fiora)
+        target: Target instance
+        steps: List of step names, e.g. ["AA", "Q", "passive", "AA", "E"]
+        rune: Optional rune instance
+
+    Returns:
+        Dict with per-step breakdown, totals, and healing.
+    """
+    from .runes import PressTheAttack, Conqueror, GraspOfTheUndying
+
+    # Rune state
+    pta_hits = 0
+    pta_exposed = False
+    conq_stacks = 0
+    conq_bonus_ad = 0.0
+    grasp_available = True
+
+    step_results = []
+    total_healing = 0.0
+
+    try:
+        for step_name in steps:
+            step = step_name.upper()
+            is_on_hit = step in ON_HIT_STEPS
+
+            # --- Conqueror: apply bonus AD once fully stacked ---
+            if rune and isinstance(rune, Conqueror) and conq_stacks == rune.max_stacks and conq_bonus_ad == 0.0:
+                bonus = rune.stat_bonus(champion.level, stacks=rune.max_stacks, adaptive="ad")
+                conq_bonus_ad = bonus["bonus_AD"]
+                champion.add_stats(bonus_AD=conq_bonus_ad)
+
+            # Resolve step
+            ability_data = _resolve_step(champion, step, target.max_hp)
+            if "error" in ability_data:
+                step_results.append({"step": step, "error": ability_data["error"]})
+                continue
+
+            # Damage amp from PtA exposure
+            damage_amp = 0.08 if pta_exposed else 0.0
+
+            dmg = calculate_damage(ability_data, target, champion=champion, damage_amp=damage_amp)
+
+            entry = {
+                "step": step,
+                "raw_damage": dmg["raw_damage"],
+                "damage_type": dmg["damage_type"],
+                "post_mitigation": dmg["total_damage"],
+            }
+
+            # Collect healing from passive
+            if step == "PASSIVE":
+                heal = ability_data.get("heal", 0)
+                entry["heal"] = heal
+                total_healing += heal
+
+            # --- PtA tracking ---
+            if rune and isinstance(rune, PressTheAttack) and is_on_hit:
+                pta_hits += 1
+                if pta_hits == 3 and not pta_exposed:
+                    proc = rune.proc_damage(champion.level, champion.bonus_AD, champion.bonus_AP)
+                    proc_dmg = calculate_damage(proc, target, champion=champion)
+                    entry["pta_proc"] = proc_dmg["total_damage"]
+                    pta_exposed = True
+
+            # --- Conqueror tracking ---
+            if rune and isinstance(rune, Conqueror) and step != "PASSIVE":
+                conq_stacks = min(conq_stacks + 2, rune.max_stacks)
+                entry["conq_stacks"] = conq_stacks
+                # Heal at max stacks
+                if conq_stacks == rune.max_stacks:
+                    heal = rune.healing(dmg["post_mitigation_damage"], is_melee=champion.is_melee)
+                    entry["conq_heal"] = heal["heal"]
+                    total_healing += heal["heal"]
+
+            # --- Grasp tracking ---
+            if rune and isinstance(rune, GraspOfTheUndying) and is_on_hit and grasp_available:
+                proc = rune.proc_damage(champion.total_HP, is_melee=champion.is_melee)
+                proc_dmg = calculate_damage(proc, target, champion=champion)
+                heal = rune.healing(champion.total_HP, is_melee=champion.is_melee)
+                entry["grasp_proc"] = proc_dmg["total_damage"]
+                entry["grasp_heal"] = heal["heal"]
+                total_healing += heal["heal"]
+                grasp_available = False
+
+            step_results.append(entry)
+
+    finally:
+        # Clean up temporary Conqueror bonus AD
+        if conq_bonus_ad > 0:
+            champion.add_stats(bonus_AD=-conq_bonus_ad)
+
+    # Totals
+    total_damage = sum(r.get("post_mitigation", 0) for r in step_results)
+    rune_damage = sum(r.get("pta_proc", 0) + r.get("grasp_proc", 0) for r in step_results)
+
+    return {
+        "combo": " > ".join(s.upper() for s in steps),
+        "steps": step_results,
+        "total_damage": round(total_damage + rune_damage, 2),
+        "total_rune_damage": round(rune_damage, 2),
+        "total_healing": round(total_healing, 2),
     }

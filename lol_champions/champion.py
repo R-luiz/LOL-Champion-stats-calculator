@@ -1,6 +1,7 @@
 """Base Champion class for League of Legends champions."""
 
 from dataclasses import dataclass, field
+from typing import Dict, Union
 
 
 @dataclass
@@ -108,6 +109,13 @@ class Champion:
         else:
             print("Champion is already at max level.")
     
+    def auto_attack(self) -> Dict[str, Union[float, str]]:
+        """Basic attack dealing total AD as physical damage."""
+        return {
+            "raw_damage": round(self.total_AD, 2),
+            "damage_type": "physical",
+        }
+
     def add_stats(self, bonus_AD: float = 0.0, bonus_AP: float = 0.0,
                   bonus_HP: float = 0.0, bonus_AR: float = 0.0, bonus_MR: float = 0.0,
                   lethality: float = 0.0, armor_pen_pct: float = 0.0,
