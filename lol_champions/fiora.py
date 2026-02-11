@@ -121,6 +121,8 @@ class Fiora(Champion):
             ms_bonus = ms_bonuses[self.R_ability.current_level - 1]
         
         return {
+            "raw_damage": round(true_damage, 2),
+            "damage_type": "true",
             "true_damage": round(true_damage, 2),
             "true_damage_percent": round(true_damage_percent, 2),
             "heal": round(heal, 2),
@@ -150,6 +152,8 @@ class Fiora(Champion):
             "cooldown": cooldowns[level],
             "base_damage": base_damages[level],
             "total_damage": round(damage, 2),
+            "raw_damage": round(damage, 2),
+            "damage_type": "physical",
             "ad_ratio": f"{int(ad_ratios[level] * 100)}% bonus AD"
         }
     
@@ -168,10 +172,13 @@ class Fiora(Champion):
         base_damages = [110, 150, 190, 230, 270]
         
         level = self.W_ability.current_level - 1
-        
+        damage = base_damages[level] + self.total_AP  # 100% AP ratio
+
         return {
             "cooldown": cooldowns[level],
             "magic_damage": base_damages[level],
+            "raw_damage": round(damage, 2),
+            "damage_type": "magic",
             "ap_ratio": "100% AP"
         }
     
@@ -191,11 +198,15 @@ class Fiora(Champion):
         crit_damages = [160, 170, 180, 190, 200]
         
         level = self.E_ability.current_level - 1
-        
+        crit_multiplier = crit_damages[level] / 100.0
+        empowered_damage = self.total_AD * crit_multiplier
+
         return {
             "cooldown": cooldowns[level],
             "bonus_attack_speed": f"{bonus_attack_speeds[level]}%",
-            "critical_damage": f"{crit_damages[level]}%"
+            "critical_damage": f"{crit_damages[level]}%",
+            "raw_damage": round(empowered_damage, 2),
+            "damage_type": "physical",
         }
     
     def R(self) -> Dict[str, Union[float, str]]:

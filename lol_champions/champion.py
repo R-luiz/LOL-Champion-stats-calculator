@@ -43,6 +43,13 @@ class Champion:
     bonus_HP: float = 0.0
     bonus_AR: float = 0.0
     bonus_MR: float = 0.0
+    # Penetration stats (from items/runes)
+    lethality: float = 0.0
+    armor_pen_pct: float = 0.0
+    magic_pen_flat: float = 0.0
+    magic_pen_pct: float = 0.0
+    # Champion type
+    is_melee: bool = True
     level: int = 1
     max_level: int = 20
     skill_points: int = 0
@@ -101,22 +108,32 @@ class Champion:
         else:
             print("Champion is already at max level.")
     
-    def add_stats(self, bonus_AD: float = 0.0, bonus_AP: float = 0.0, 
-                  bonus_HP: float = 0.0, bonus_AR: float = 0.0, bonus_MR: float = 0.0):
+    def add_stats(self, bonus_AD: float = 0.0, bonus_AP: float = 0.0,
+                  bonus_HP: float = 0.0, bonus_AR: float = 0.0, bonus_MR: float = 0.0,
+                  lethality: float = 0.0, armor_pen_pct: float = 0.0,
+                  magic_pen_flat: float = 0.0, magic_pen_pct: float = 0.0):
         """Add bonus stats from items or buffs.
-        
+
         Args:
             bonus_AD: Additional attack damage
             bonus_AP: Additional ability power
             bonus_HP: Additional health points
             bonus_AR: Additional armor
             bonus_MR: Additional magic resist
+            lethality: Flat armor penetration
+            armor_pen_pct: Percentage armor penetration (decimal, e.g. 0.35)
+            magic_pen_flat: Flat magic penetration
+            magic_pen_pct: Percentage magic penetration (decimal, e.g. 0.40)
         """
         self.bonus_AD += bonus_AD
         self.bonus_AP += bonus_AP
         self.bonus_HP += bonus_HP
         self.bonus_AR += bonus_AR
         self.bonus_MR += bonus_MR
+        self.lethality += lethality
+        self.armor_pen_pct += armor_pen_pct
+        self.magic_pen_flat += magic_pen_flat
+        self.magic_pen_pct += magic_pen_pct
         self.total_AD = self.base_AD + self.bonus_AD
         self.total_AP = self.base_AP + self.bonus_AP
         self.total_HP = self.base_HP + self.bonus_HP

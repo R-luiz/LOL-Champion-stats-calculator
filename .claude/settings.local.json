@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd /c/Users/luizr/Documents/\"DEV python\"/LOL-Champion-stats-calculator)",
+      "mcp__claude_ai_fetch__fetch",
+      "mcp__claude_ai_sequencial_thinking__sequentialthinking",
+      "Bash(python:*)"
+    ]
+  }
+}
