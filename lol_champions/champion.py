@@ -49,11 +49,18 @@ class Champion:
     armor_pen_pct: float = 0.0
     magic_pen_flat: float = 0.0
     magic_pen_pct: float = 0.0
+    # Attack speed stats
+    base_AS: float = 0.625
+    AS_ratio: float = 0.625
+    AS_growth: float = 0.0
+    bonus_AS: float = 0.0
+    windup_pct: float = 0.20
+    AS_cap: float = 2.5
     # Champion type
     is_melee: bool = True
     level: int = 1
     max_level: int = 20
-    skill_points: int = 0
+    skill_points: int = 1  # Level 1 grants a skill point
     total_AD: float = field(init=False)
     total_AP: float = field(init=False)
     total_HP: float = field(init=False)
@@ -109,6 +116,24 @@ class Champion:
         else:
             print("Champion is already at max level.")
     
+    def total_attack_speed(self, extra_bonus_as_pct: float = 0.0) -> float:
+        """Calculate total attack speed using the LoL formula.
+
+        Formula: base_AS * (1 + (level_bonus + bonus_AS + extra) / 100)
+        Clamped to [0.2, AS_cap].
+        """
+        level_bonus = self.AS_growth * (self.level - 1) * (0.7025 + 0.0175 * (self.level - 1))
+        total = self.base_AS * (1.0 + (level_bonus + self.bonus_AS + extra_bonus_as_pct) / 100.0)
+        return min(max(total, 0.2), self.AS_cap)
+
+    def attack_interval(self, extra_bonus_as_pct: float = 0.0) -> float:
+        """Time in seconds between auto attacks (1 / attack_speed)."""
+        return round(1.0 / self.total_attack_speed(extra_bonus_as_pct), 4)
+
+    def windup_time(self, extra_bonus_as_pct: float = 0.0) -> float:
+        """Time in seconds for the attack windup animation."""
+        return round(self.attack_interval(extra_bonus_as_pct) * self.windup_pct, 4)
+
     def auto_attack(self) -> Dict[str, Union[float, str]]:
         """Basic attack dealing total AD as physical damage."""
         return {
@@ -119,7 +144,8 @@ class Champion:
     def add_stats(self, bonus_AD: float = 0.0, bonus_AP: float = 0.0,
                   bonus_HP: float = 0.0, bonus_AR: float = 0.0, bonus_MR: float = 0.0,
                   lethality: float = 0.0, armor_pen_pct: float = 0.0,
-                  magic_pen_flat: float = 0.0, magic_pen_pct: float = 0.0):
+                  magic_pen_flat: float = 0.0, magic_pen_pct: float = 0.0,
+                  bonus_AS: float = 0.0):
         """Add bonus stats from items or buffs.
 
         Args:
@@ -132,6 +158,7 @@ class Champion:
             armor_pen_pct: Percentage armor penetration (decimal, e.g. 0.35)
             magic_pen_flat: Flat magic penetration
             magic_pen_pct: Percentage magic penetration (decimal, e.g. 0.40)
+            bonus_AS: Bonus attack speed percentage (e.g. 35 for 35%)
         """
         self.bonus_AD += bonus_AD
         self.bonus_AP += bonus_AP
@@ -142,6 +169,7 @@ class Champion:
         self.armor_pen_pct += armor_pen_pct
         self.magic_pen_flat += magic_pen_flat
         self.magic_pen_pct += magic_pen_pct
+        self.bonus_AS += bonus_AS
         self.total_AD = self.base_AD + self.bonus_AD
         self.total_AP = self.base_AP + self.bonus_AP
         self.total_HP = self.base_HP + self.bonus_HP

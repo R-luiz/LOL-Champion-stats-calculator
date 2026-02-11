@@ -7,11 +7,30 @@ from .ability import Ability
 
 class Fiora(Champion):
     """Fiora - The Grand Duelist.
-    
+
     A top lane skirmisher champion that excels at dueling and true damage output.
     Based on official League of Legends Wiki data.
     """
-    
+
+    # Animation / cast time constants (seconds)
+    # Q: dash speed ~1100 units over ~400 range ≈ 0.25s at base MS
+    Q_CAST_TIME = 0.25
+    # W: 0.75s total parry lockout; stab fires at 0.5s into the animation
+    W_CAST_TIME = 0.75
+    W_HIT_TIME = 0.50
+    E_CAST_TIME = 0.0
+    R_CAST_TIME = 0.0
+
+    # Vital timing (from LoL Wiki)
+    # After proccing a vital: new one identified 0.5s later, takes 1.75s to become targetable
+    VITAL_RESPAWN_DELAY = 2.25  # total: 0.5 + 1.75
+    # R reveals 4 vitals 0.5s after cast (immediately targetable once they appear)
+    R_VITAL_APPEAR_DELAY = 0.5
+
+    # E bonus attack speed by rank (index 0 = rank 1)
+    # Bonus AS only applies for the 2 empowered attacks, not a flat duration
+    E_BONUS_AS = [50, 60, 70, 80, 90]
+
     def __init__(self):
         """Initialize Fiora with her base stats."""
         super().__init__(
@@ -24,7 +43,12 @@ class Fiora(Champion):
             base_AR=33,
             AR_scaling=4.7,
             base_MR=32,
-            MR_scaling=2.05
+            MR_scaling=2.05,
+            base_AS=0.69,
+            AS_ratio=0.69,
+            AS_growth=3.2,
+            windup_pct=0.1379,
+            AS_cap=3.003,
         )
         self.Q_ability = Ability("Lunge", max_level=5)
         self.W_ability = Ability("Riposte", max_level=5)
@@ -232,6 +256,28 @@ class Fiora(Champion):
             "duration": "5 seconds"
         }
     
+    def e_bonus_attack_speed(self) -> float:
+        """Return E's bonus attack speed % at current rank, or 0 if not learned."""
+        if self.E_ability.current_level == 0:
+            return 0.0
+        return self.E_BONUS_AS[self.E_ability.current_level - 1]
+
+    def get_cooldown(self, ability: str) -> float:
+        """Return cooldown in seconds for the given ability at current rank.
+
+        Returns float('inf') if ability is not learned.
+        """
+        cooldowns = {
+            'Q': [13, 11.25, 9.5, 7.75, 6],
+            'W': [24, 22, 20, 18, 16],
+            'E': [11, 10, 9, 8, 7],
+            'R': [110, 90, 70],
+        }
+        ab = getattr(self, f"{ability}_ability")
+        if ab.current_level == 0:
+            return float('inf')
+        return cooldowns[ability][ab.current_level - 1]
+
     def __str__(self) -> str:
         """String representation including abilities."""
         base_str = super().__str__()

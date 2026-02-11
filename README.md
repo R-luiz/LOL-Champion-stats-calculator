@@ -1,6 +1,27 @@
 # League of Legends Fiora Damage Calculator
 
-A Python CLI and library that calculates Fiora's exact post-mitigation damage against any target, including auto attacks, ability combos, and keystone rune interactions. All formulas and values sourced from the official [LoL Wiki](https://wiki.leagueoflegends.com/en-us/).
+A Python CLI and library that calculates Fiora's exact post-mitigation damage against any target, including auto attacks, ability combos, keystone rune interactions, and time-based DPS optimization. All formulas and values sourced from the official [LoL Wiki](https://wiki.leagueoflegends.com/en-us/).
+
+## Copilot / AI Assistant Prompt
+
+Use this as your system prompt when asking Fiora damage questions:
+
+> You are a League of Legends Fiora damage assistant. You answer questions by running `python cli.py` from this repository and interpreting the JSON output.
+>
+> **Rules:**
+> 1. Never ask clarifying questions. Use reasonable defaults for anything not specified: level 9, Q rank 5, E rank 3, W rank 1, R rank 1, 50 bonus AD, 80 target armor, 50 target MR, 2000 target HP.
+> 2. Translate the user's LoL language into CLI flags. "I have Triforce" → `--bonus-ad 45 --bonus-as 33`. "Enemy has Plated Steelcaps + 2 cloth armors" → `--target-armor 110`. Look up item stats if needed.
+> 3. Pick the right mode automatically:
+>    - "How much does Q do?" → default mode (no --combo, no --time)
+>    - "How much damage does AA Q passive AA E AA do?" → `--combo "AA Q passive AA E AA"`
+>    - "What's my max damage in 5 seconds?" or "DPS in a 5s trade?" → `--time 5`
+> 4. Always include the rune flag if the user mentions a keystone. Map common names: "PtA" / "Press the Attack" → `--rune pta`, "Conq" → `--rune conqueror`, "HoB" → `--rune hob`, "Grasp" → `--rune grasp`.
+> 5. For DPS mode (`--time`), include `--bonus-as` if the user has attack speed items. Use `--r-active` only if R was already cast before the fight (4 vitals immediately). Without `--r-active`, the optimizer will still activate R mid-fight on its own if R is ranked — so just having `--r 1` is enough for "I ult them" or "all-in" scenarios.
+> 6. Answer with the final number first (e.g. "Q deals 91.67 post-mitigation damage"), then optionally a one-line breakdown. Do not dump raw JSON.
+> 7. Rune interactions are automatic: PtA stacks on AA/Q/E and procs on 3rd hit with 8% amp after; Conqueror stacks +2 per action, grants bonus AD at 12 stacks which also increases vital true damage; Grasp procs on first on-hit. In DPS mode, vitals auto-proc on damaging actions when available (2.25s respawn). In combo mode, you must explicitly include `passive` steps where vitals would proc.
+> 8. E in combos = Bladework crit-empowered auto. In DPS mode, E is split into E_ACTIVATE (instant, resets AA timer) + E_FIRST (non-crit empowered auto) + E_CRIT (guaranteed crit). R_ACTIVATE is used automatically when optimal.
+> 9. DPS output includes a `timeline` array with per-action timestamps and a `sequence` string. Use these to describe the optimal rotation (e.g. "E > E_FIRST > Q > E_CRIT > AA > AA" at specific timings).
+> 10. If the user asks to compare scenarios, run multiple commands and present a comparison table.
 
 ## Quick Start
 
@@ -68,7 +89,19 @@ python cli.py [champion options] [item options] [target options] [--rune RUNE] [
 | `E` | Bladework crit-empowered auto (total AD * crit multiplier, physical) |
 | `passive` | Vital proc (true damage % of target max HP + heal) |
 
-Without `--combo`, the CLI outputs individual damage for each ability. With `--combo`, it simulates the full sequence step by step with rune state tracking.
+Without `--combo` or `--time`, the CLI outputs individual damage for each ability. With `--combo`, it simulates the full sequence step by step with rune state tracking. With `--time`, it finds the optimal action sequence for maximum damage.
+
+In DPS mode, E is automatically split into three phases: **E_ACTIVATE** (instant, resets AA timer, grants bonus AS for 2 attacks), **E_FIRST** (first empowered auto, no crit), and **E_CRIT** (second empowered auto, guaranteed crit). **R_ACTIVATE** is used when it maximizes damage (reveals 4 vitals after 0.5s).
+
+### DPS Optimizer Options
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--time` | -- | Time window in seconds to optimize over (e.g. `--time 5`) |
+| `--bonus-as` | 0 | Bonus attack speed % from items (e.g. 35 for 35%) |
+| `--r-active` | false | R is active (4 vitals available immediately) |
+
+DPS mode uses branch-and-bound search (<=10s) or greedy heuristic (>10s) to find the action sequence that maximizes total damage. It accounts for attack speed, ability cooldowns, cast times, AA resets (Q and E), vital respawn timing (2.25s between passive procs), R activation (4 vitals after 0.5s delay), E two-attack model (E_FIRST + E_CRIT with bonus AS only during empowered attacks), and all rune interactions.
 
 ## Combo Examples
 
@@ -98,15 +131,34 @@ python cli.py --combo "AA passive" --level 3 --q 1 --bonus-ad 10 --target-armor 
 python cli.py --combo "AA AA AA" --level 6 --bonus-ad 30 --target-armor 60
 ```
 
-## How Runes Work in Combos
+## DPS Optimizer Examples
 
-**Press the Attack (pta)**: Stacks on on-hit steps (AA, Q, E). On the 3rd hit, deals 40-174 bonus adaptive damage and exposes the target: all subsequent damage in the combo is amplified by 8%.
+### 5-second trade with PtA
+```bash
+python cli.py --time 5 --level 9 --q 5 --e 3 --bonus-ad 50 --target-armor 80 --rune pta
+```
 
-**Conqueror**: Every damaging step (except passive) adds 2 stacks (max 12). At max stacks, Fiora gains bonus AD (1.08-2.56 per stack based on level) which increases damage of subsequent abilities, and heals for 8% of post-mitigation damage dealt.
+### 8-second all-in with R active + Conqueror
+```bash
+python cli.py --time 8 --level 11 --q 5 --w 1 --e 3 --r 2 --bonus-ad 120 --target-armor 100 --target-mr 60 --target-hp 3000 --r-active --rune conqueror
+```
 
-**Hail of Blades (hob)**: Grants 160% bonus attack speed (melee) for 3 attacks. No per-step damage modification in the calculator, but the attack speed info is returned.
+### Long DPS check with attack speed items
+```bash
+python cli.py --time 15 --level 14 --q 5 --e 5 --r 2 --bonus-ad 200 --bonus-as 50 --target-armor 150
+```
 
-**Grasp of the Undying (grasp)**: First on-hit step in the combo deals 3.5% of Fiora's max HP as bonus magic damage and heals for 1.3% max HP. Also grants +5 permanent HP per proc.
+## How Runes Work
+
+Rune interactions are fully tracked in both combo and DPS modes.
+
+**Press the Attack (pta)**: Stacks on on-hit actions (AA, Q, E). On the 3rd hit, deals 40-174 bonus adaptive damage and exposes the target: all subsequent damage is amplified by 8%, including vital true damage.
+
+**Conqueror**: Every damaging action (except passive) adds 2 stacks (max 12). At max stacks, Fiora gains bonus AD (1.08-2.56 per stack based on level) which increases ability damage AND vital true damage (passive scales with bonus AD). Heals for 8% of all damage dealt (ability + vital combined).
+
+**Hail of Blades (hob)**: Grants 160% bonus attack speed (melee) for 3 attacks. In DPS mode, this reduces attack intervals during burst, allowing faster AA/E_CRIT weaving.
+
+**Grasp of the Undying (grasp)**: First on-hit action deals 3.5% of Fiora's max HP as bonus magic damage and heals for 1.3% max HP. Also grants +5 permanent HP per proc.
 
 ## LoL Damage Glossary
 
@@ -152,7 +204,7 @@ Example: 200 raw physical damage vs 100 armor = 200 * (100/200) = 100 damage tak
 ## Python API
 
 ```python
-from lol_champions import Fiora, Target, calculate_damage, calculate_combo
+from lol_champions import Fiora, Target, calculate_damage, calculate_combo, optimize_dps
 from lol_champions.runes import PressTheAttack
 
 fiora = Fiora()
@@ -175,6 +227,12 @@ pta = PressTheAttack()
 combo = calculate_combo(fiora, target, ["AA", "Q", "passive", "AA", "E", "AA"], rune=pta)
 print(combo["total_damage"])   # total combo damage including rune procs
 print(combo["total_healing"])  # total healing from vitals + rune
+
+# DPS optimizer: max damage in 5 seconds
+dps = optimize_dps(fiora, target, time_limit=5.0, rune=pta, bonus_as=35)
+print(dps["total_damage"])     # optimal total damage
+print(dps["dps"])              # damage per second
+print(dps["sequence"])         # optimal action sequence
 ```
 
 ## Data Source

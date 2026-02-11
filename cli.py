@@ -12,7 +12,7 @@ import json
 import sys
 from contextlib import redirect_stdout
 
-from lol_champions import Fiora, Target, calculate_damage, calculate_combo
+from lol_champions import Fiora, Target, calculate_damage, calculate_combo, optimize_dps
 from lol_champions.runes import PressTheAttack, Conqueror, HailOfBlades, GraspOfTheUndying
 
 RUNES = {
@@ -196,6 +196,34 @@ def compute_combo(args):
     }
 
 
+def compute_dps(args):
+    fiora = build_fiora(args)
+    target = Target(max_hp=args.target_hp, armor=args.target_armor, mr=args.target_mr)
+    rune = RUNES[args.rune.lower()]() if args.rune and args.rune.lower() in RUNES else None
+
+    result = optimize_dps(
+        champion=fiora,
+        target=target,
+        time_limit=args.time,
+        rune=rune,
+        r_active=args.r_active,
+        bonus_as=args.bonus_as,
+    )
+
+    result["champion"] = {
+        "name": "Fiora",
+        "level": fiora.level,
+        "total_AD": round(fiora.total_AD, 2),
+        "bonus_AD": fiora.bonus_AD,
+        "attack_speed": round(fiora.total_attack_speed(extra_bonus_as_pct=args.bonus_as), 3),
+        "attack_interval": round(fiora.attack_interval(extra_bonus_as_pct=args.bonus_as), 3),
+    }
+    result["target"] = {"max_hp": target.max_hp, "armor": target.armor, "mr": target.mr}
+    result["rune"] = rune.name if rune else None
+
+    return result
+
+
 def main():
     p = argparse.ArgumentParser(
         description="Fiora damage calculator. Outputs JSON.",
@@ -241,8 +269,18 @@ def main():
                    help="Combo sequence, e.g. \"AA Q passive AA E AA\". "
                         "Steps: AA, Q, W, E, passive")
 
+    # DPS optimizer
+    p.add_argument("--time", type=float, default=None,
+                   help="DPS optimize: find max damage in T seconds (e.g. --time 5)")
+    p.add_argument("--bonus-as", type=float, default=0,
+                   help="Bonus attack speed %% from items (e.g. 35 for 35%%)")
+    p.add_argument("--r-active", action="store_true", default=False,
+                   help="R is active (4 vitals available immediately)")
+
     args = p.parse_args()
-    if args.combo:
+    if args.time:
+        output = compute_dps(args)
+    elif args.combo:
         output = compute_combo(args)
     else:
         output = compute(args)
