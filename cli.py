@@ -14,6 +14,8 @@ from contextlib import redirect_stdout
 
 from lol_champions import Fiora, Target, calculate_damage, calculate_combo, optimize_dps
 from lol_champions.runes import PressTheAttack, Conqueror, HailOfBlades, GraspOfTheUndying
+from lol_champions.runes import LastStand, CoupDeGrace, CutDown
+from lol_champions.items import SpearOfShojin
 
 RUNES = {
     "pta": PressTheAttack,
@@ -47,9 +49,55 @@ def build_fiora(args) -> Fiora:
     return fiora
 
 
+def build_modifiers(args, fiora=None, target=None):
+    """Build damage_modifiers list and items list from CLI args.
+
+    Returns:
+        (damage_modifiers, items) tuple.
+    """
+    mods = []
+    items = []
+
+    # Last Stand (missing HP %, 0-100)
+    if args.last_stand is not None:
+        rune = LastStand()
+        amp = rune.damage_amp(args.last_stand)
+        if amp > 0:
+            mods.append({"name": "Last Stand", "amp": round(amp, 4)})
+
+    # Coup de Grace (target HP %, 0-100)
+    if args.coup_de_grace is not None:
+        rune = CoupDeGrace()
+        amp = rune.damage_amp(args.coup_de_grace)
+        if amp > 0:
+            mods.append({"name": "Coup de Grace", "amp": round(amp, 4)})
+
+    # Cut Down (requires target_hp and champion HP)
+    if args.cut_down and fiora and target:
+        rune = CutDown()
+        amp = rune.damage_amp(target.max_hp, fiora.total_HP)
+        if amp > 0:
+            mods.append({"name": "Cut Down", "amp": round(amp, 4)})
+
+    # Spear of Shojin
+    if args.shojin_stacks is not None:
+        shojin = SpearOfShojin(stacks=args.shojin_stacks)
+        items.append(shojin)
+        # For default mode, add static amp; combo/DPS handle dynamically
+
+    return mods, items
+
+
 def compute(args):
     fiora = build_fiora(args)
     target = Target(max_hp=args.target_hp, armor=args.target_armor, mr=args.target_mr)
+    mods, items_list = build_modifiers(args, fiora=fiora, target=target)
+
+    # For default mode, Shojin amp is applied statically per ability
+    shojin_mod = None
+    for item in items_list:
+        if isinstance(item, SpearOfShojin) and item.damage_amp() > 0:
+            shojin_mod = item.modifier_dict()
 
     result = {
         "champion": {
@@ -73,32 +121,43 @@ def compute(args):
         "target": {"max_hp": target.max_hp, "armor": target.armor, "mr": target.mr},
         "abilities": {},
         "rune": None,
+        "damage_modifiers": mods + ([shojin_mod] if shojin_mod else []),
     }
 
-    # Abilities
+    # Abilities — Shojin applies to Q, W, E, passive but NOT to auto attacks
     for name, method in [("Q", fiora.Q), ("W", fiora.W), ("E", fiora.E)]:
+        ability_mods = mods[:]
+        if shojin_mod:
+            ability_mods.append(shojin_mod)
         data = method()
         if "error" in data:
             result["abilities"][name] = {"error": data["error"]}
         else:
-            dmg = calculate_damage(data, target, champion=fiora)
+            dmg = calculate_damage(data, target, champion=fiora,
+                                   damage_modifiers=ability_mods)
             result["abilities"][name] = {
                 "raw_damage": dmg["raw_damage"],
                 "damage_type": dmg["damage_type"],
                 "post_mitigation": dmg["total_damage"],
                 "effective_resistance": dmg["effective_resistance"],
                 "cooldown": data.get("cooldown"),
+                "amp_multiplier": dmg.get("total_amp_multiplier"),
             }
 
-    # Passive
+    # Passive (Shojin amplifies proc damage; Last Stand etc. apply too)
+    passive_mods = mods[:]
+    if shojin_mod:
+        passive_mods.append(shojin_mod)
     passive_data = fiora.passive(target_max_hp=target.max_hp)
-    passive_dmg = calculate_damage(passive_data, target, champion=fiora)
+    passive_dmg = calculate_damage(passive_data, target, champion=fiora,
+                                    damage_modifiers=passive_mods)
     result["abilities"]["passive"] = {
         "raw_damage": passive_dmg["raw_damage"],
         "damage_type": "true",
         "post_mitigation": passive_dmg["total_damage"],
         "heal": passive_data["heal"],
         "true_damage_percent": passive_data["true_damage_percent"],
+        "amp_multiplier": passive_dmg.get("total_amp_multiplier"),
     }
 
     # R (healing info, no direct damage)
@@ -176,11 +235,16 @@ def compute(args):
 def compute_combo(args):
     fiora = build_fiora(args)
     target = Target(max_hp=args.target_hp, armor=args.target_armor, mr=args.target_mr)
+    mods, items_list = build_modifiers(args, fiora=fiora, target=target)
 
     steps = args.combo.split()
     rune = RUNES[args.rune.lower()]() if args.rune and args.rune.lower() in RUNES else None
 
-    combo_result = calculate_combo(fiora, target, steps, rune=rune)
+    combo_result = calculate_combo(
+        fiora, target, steps, rune=rune,
+        damage_modifiers=mods if mods else None,
+        items=items_list if items_list else None,
+    )
 
     return {
         "champion": {
@@ -192,6 +256,7 @@ def compute_combo(args):
         },
         "target": {"max_hp": target.max_hp, "armor": target.armor, "mr": target.mr},
         "rune": rune.name if rune else None,
+        "damage_modifiers": mods,
         **combo_result,
     }
 
@@ -199,6 +264,7 @@ def compute_combo(args):
 def compute_dps(args):
     fiora = build_fiora(args)
     target = Target(max_hp=args.target_hp, armor=args.target_armor, mr=args.target_mr)
+    mods, items_list = build_modifiers(args, fiora=fiora, target=target)
     rune = RUNES[args.rune.lower()]() if args.rune and args.rune.lower() in RUNES else None
 
     result = optimize_dps(
@@ -208,6 +274,8 @@ def compute_dps(args):
         rune=rune,
         r_active=args.r_active,
         bonus_as=args.bonus_as,
+        damage_modifiers=mods if mods else None,
+        items=items_list if items_list else None,
     )
 
     result["champion"] = {
@@ -220,6 +288,7 @@ def compute_dps(args):
     }
     result["target"] = {"max_hp": target.max_hp, "armor": target.armor, "mr": target.mr}
     result["rune"] = rune.name if rune else None
+    result["damage_modifiers"] = mods
 
     return result
 
@@ -276,7 +345,20 @@ def main():
                    help="Bonus attack speed %% from items (e.g. 35 for 35%%)")
     p.add_argument("--r-active", action="store_true", default=False,
                    help="R is active (4 vitals available immediately)")
+    # Damage modifiers (minor runes)
+    p.add_argument("--last-stand", type=float, default=None, metavar="MISSING_HP_PCT",
+                   help="Last Stand: your missing HP %% (0-100). "
+                        "E.g. 70 = 30%% current HP → 11%% amp (max)")
+    p.add_argument("--coup-de-grace", type=float, default=None, metavar="TARGET_HP_PCT",
+                   help="Coup de Grace: target current HP %%. "
+                        "8%% amp if target < 40%% HP")
+    p.add_argument("--cut-down", action="store_true", default=False,
+                   help="Cut Down: auto-calculated from target/champion HP")
 
+    # Item passives
+    p.add_argument("--shojin-stacks", type=int, default=None, metavar="N",
+                   help="Spear of Shojin stacks (0-4). "
+                        "3%% per stack on ability/proc damage")
     args = p.parse_args()
     if args.time:
         output = compute_dps(args)

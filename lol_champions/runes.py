@@ -254,3 +254,96 @@ class GraspOfTheUndying:
         return {
             "permanent_hp": hp,
         }
+
+
+# ─── MINOR RUNES (Precision Row 3 — Combat) ───
+
+
+@dataclass
+class LastStand:
+    """Last Stand (Precision, row 3 minor rune).
+
+    Deal 5% increased damage to champions while below 60% maximum health.
+    Scales up to 11% increased damage while below 30% maximum health.
+    Since patch 15.3, applies to true damage as well.
+
+    Usage:
+        ls = LastStand()
+        amp = ls.damage_amp(missing_hp_pct=70)  # -> 0.11 (max)
+    """
+    name: str = "Last Stand"
+
+    def damage_amp(self, missing_hp_pct: float) -> float:
+        """Calculate damage amplification based on missing HP.
+
+        Args:
+            missing_hp_pct: Percentage of max HP that is missing (0–100).
+                            60% current HP = 40% missing, 30% current HP = 70% missing.
+
+        Returns:
+            Damage amp as a decimal (0.05–0.11), or 0.0 if above 60% HP.
+        """
+        current_hp_pct = 100.0 - max(0.0, min(missing_hp_pct, 100.0))
+        if current_hp_pct >= 60.0:
+            return 0.0
+        if current_hp_pct <= 30.0:
+            return 0.11
+        # Linear interpolation: 5% at 60% HP → 11% at 30% HP
+        return round(0.05 + (60.0 - current_hp_pct) / 30.0 * 0.06, 4)
+
+
+@dataclass
+class CoupDeGrace:
+    """Coup de Grace (Precision, row 3 minor rune).
+
+    Deal 8% increased damage to champions below 40% maximum health.
+
+    Usage:
+        cdg = CoupDeGrace()
+        amp = cdg.damage_amp(target_hp_pct=35)  # -> 0.08
+    """
+    name: str = "Coup de Grace"
+
+    def damage_amp(self, target_hp_pct: float) -> float:
+        """Calculate damage amp based on target current HP %.
+
+        Args:
+            target_hp_pct: Target's current HP as % of max (0–100).
+
+        Returns:
+            0.08 if target is below 40% HP, else 0.0.
+        """
+        return 0.08 if target_hp_pct < 40.0 else 0.0
+
+
+@dataclass
+class CutDown:
+    """Cut Down (Precision, row 3 minor rune).
+
+    Deal 5% to 15% increased damage to champions with more max HP than you.
+    Scales linearly from 5% (target has 10% more max HP) to 15% (100% more).
+
+    Usage:
+        cd = CutDown()
+        amp = cd.damage_amp(target_max_hp=3000, your_max_hp=2000)  # -> 0.1
+    """
+    name: str = "Cut Down"
+
+    def damage_amp(self, target_max_hp: float, your_max_hp: float) -> float:
+        """Calculate damage amp based on max HP difference.
+
+        Args:
+            target_max_hp: Target's maximum HP.
+            your_max_hp: Your champion's maximum HP.
+
+        Returns:
+            Damage amp as decimal (0.05–0.15), or 0.0 if difference < 10%.
+        """
+        if your_max_hp <= 0:
+            return 0.0
+        diff_pct = (target_max_hp - your_max_hp) / your_max_hp * 100.0
+        if diff_pct < 10.0:
+            return 0.0
+        if diff_pct >= 100.0:
+            return 0.15
+        return round(0.05 + (diff_pct - 10.0) / 90.0 * 0.10, 4)

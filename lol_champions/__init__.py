@@ -6,6 +6,8 @@ from .fiora import Fiora
 from .target import Target
 from .damage import calculate_damage, calculate_combo, effective_resistance, damage_after_mitigation
 from .runes import PressTheAttack, Conqueror, HailOfBlades, GraspOfTheUndying
+from .runes import LastStand, CoupDeGrace, CutDown
+from .items import SpearOfShojin
 from .dps import optimize_dps
 
 __all__ = [
@@ -13,6 +15,8 @@ __all__ = [
     'Target',
     'calculate_damage', 'calculate_combo', 'effective_resistance', 'damage_after_mitigation',
     'PressTheAttack', 'Conqueror', 'HailOfBlades', 'GraspOfTheUndying',
+    'LastStand', 'CoupDeGrace', 'CutDown',
+    'SpearOfShojin',
     'optimize_dps',
 ]
-__version__ = '1.2.0'
+__version__ = '1.3.0'

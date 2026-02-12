@@ -58,6 +58,9 @@ class DPSState:
     hob_stacks: int = 0
     hob_active_until: float = 0.0
     grasp_available: bool = True
+    # Item state
+    shojin_stacks: int = 0
+    shojin_max_stacks: int = 0  # 0 = no Shojin
     # Accumulated results
     damage_so_far: float = 0.0
     healing_so_far: float = 0.0
@@ -99,35 +102,65 @@ class DamageTable:
     w_cd: float = float('inf')
     e_cd: float = float('inf')
     r_cd: float = float('inf')
+    # Static damage amplifier (Last Stand, Coup de Grace, etc.)
+    # Pre-multiplied into table values. Stored for reporting.
+    static_amp_multiplier: float = 1.0
+    # Shojin per-stack amp (applied dynamically per-action)
+    shojin_amp_per_stack: float = 0.0
 
 
-def build_damage_table(champion, target, rune=None) -> DamageTable:
-    """Pre-compute all damage values for the search."""
+def build_damage_table(
+    champion, target, rune=None,
+    damage_modifiers=None, items=None,
+) -> DamageTable:
+    """Pre-compute all damage values for the search.
+
+    Static damage_modifiers (Last Stand, etc.) are baked into every
+    table entry.  Shojin is stored as per-stack amp and applied
+    dynamically at lookup time.
+    """
     from .runes import PressTheAttack, Conqueror, GraspOfTheUndying
+    from .items import SpearOfShojin
 
     table = DamageTable()
 
-    # Base damages
+    # Compute static multiplier from damage_modifiers
+    static_mult = 1.0
+    for mod in (damage_modifiers or []):
+        static_mult *= (1.0 + mod.get("amp", 0.0))
+    table.static_amp_multiplier = round(static_mult, 4)
+
+    # Shojin per-stack amp (for dynamic application)
+    if items:
+        for item in items:
+            if isinstance(item, SpearOfShojin):
+                table.shojin_amp_per_stack = item.amp_per_stack
+
+    # Helper to apply static multiplier
+    def _amp(val: float) -> float:
+        return round(val * static_mult, 2)
+
+    # Base damages (with static amp baked in)
     aa_data = champion.auto_attack()
-    table.aa = calculate_damage(aa_data, target, champion=champion)["total_damage"]
+    table.aa = _amp(calculate_damage(aa_data, target, champion=champion)["total_damage"])
 
     q_data = champion.Q()
     if "error" not in q_data:
-        table.q = calculate_damage(q_data, target, champion=champion)["total_damage"]
+        table.q = _amp(calculate_damage(q_data, target, champion=champion)["total_damage"])
         table.q_cd = q_data["cooldown"]
 
     w_data = champion.W()
     if "error" not in w_data:
-        table.w = calculate_damage(w_data, target, champion=champion)["total_damage"]
+        table.w = _amp(calculate_damage(w_data, target, champion=champion)["total_damage"])
         table.w_cd = w_data["cooldown"]
 
     e_data = champion.E()
     if "error" not in e_data:
-        table.e_crit = calculate_damage(e_data, target, champion=champion)["total_damage"]
+        table.e_crit = _amp(calculate_damage(e_data, target, champion=champion)["total_damage"])
         table.e_cd = e_data["cooldown"]
 
     passive_data = champion.passive(target_max_hp=target.max_hp)
-    table.passive = calculate_damage(passive_data, target, champion=champion)["total_damage"]
+    table.passive = _amp(calculate_damage(passive_data, target, champion=champion)["total_damage"])
     table.passive_heal = passive_data.get("heal", 0.0)
 
     # R cooldown
@@ -137,16 +170,16 @@ def build_damage_table(champion, target, rune=None) -> DamageTable:
 
     # PtA variants (8% amp on ALL damage types including true damage from vitals)
     if rune and isinstance(rune, PressTheAttack):
-        table.aa_pta = calculate_damage(aa_data, target, champion=champion, damage_amp=0.08)["total_damage"]
+        table.aa_pta = _amp(calculate_damage(aa_data, target, champion=champion, damage_amp=0.08)["total_damage"])
         if "error" not in q_data:
-            table.q_pta = calculate_damage(q_data, target, champion=champion, damage_amp=0.08)["total_damage"]
+            table.q_pta = _amp(calculate_damage(q_data, target, champion=champion, damage_amp=0.08)["total_damage"])
         if "error" not in w_data:
-            table.w_pta = calculate_damage(w_data, target, champion=champion, damage_amp=0.08)["total_damage"]
+            table.w_pta = _amp(calculate_damage(w_data, target, champion=champion, damage_amp=0.08)["total_damage"])
         if "error" not in e_data:
-            table.e_crit_pta = calculate_damage(e_data, target, champion=champion, damage_amp=0.08)["total_damage"]
-        table.passive_pta = calculate_damage(passive_data, target, champion=champion, damage_amp=0.08)["total_damage"]
+            table.e_crit_pta = _amp(calculate_damage(e_data, target, champion=champion, damage_amp=0.08)["total_damage"])
+        table.passive_pta = _amp(calculate_damage(passive_data, target, champion=champion, damage_amp=0.08)["total_damage"])
         proc = rune.proc_damage(champion.level, champion.bonus_AD, champion.bonus_AP)
-        table.pta_proc = calculate_damage(proc, target, champion=champion)["total_damage"]
+        table.pta_proc = _amp(calculate_damage(proc, target, champion=champion)["total_damage"])
 
     # Conqueror variants (bonus AD at max stacks affects ability damage AND passive scaling)
     if rune and isinstance(rune, Conqueror):
@@ -154,19 +187,19 @@ def build_damage_table(champion, target, rune=None) -> DamageTable:
         conq_ad = bonus["bonus_AD"]
         champion.add_stats(bonus_AD=conq_ad)
         try:
-            table.aa_conq = calculate_damage(champion.auto_attack(), target, champion=champion)["total_damage"]
+            table.aa_conq = _amp(calculate_damage(champion.auto_attack(), target, champion=champion)["total_damage"])
             cq = champion.Q()
             if "error" not in cq:
-                table.q_conq = calculate_damage(cq, target, champion=champion)["total_damage"]
+                table.q_conq = _amp(calculate_damage(cq, target, champion=champion)["total_damage"])
             cw = champion.W()
             if "error" not in cw:
-                table.w_conq = calculate_damage(cw, target, champion=champion)["total_damage"]
+                table.w_conq = _amp(calculate_damage(cw, target, champion=champion)["total_damage"])
             ce = champion.E()
             if "error" not in ce:
-                table.e_crit_conq = calculate_damage(ce, target, champion=champion)["total_damage"]
+                table.e_crit_conq = _amp(calculate_damage(ce, target, champion=champion)["total_damage"])
             # Passive scales with bonus AD: 3% + 4% per 100 bonus AD
             conq_passive = champion.passive(target_max_hp=target.max_hp)
-            table.passive_conq = calculate_damage(conq_passive, target, champion=champion)["total_damage"]
+            table.passive_conq = _amp(calculate_damage(conq_passive, target, champion=champion)["total_damage"])
             table.passive_heal_conq = conq_passive.get("heal", 0.0)
         finally:
             champion.add_stats(bonus_AD=-conq_ad)
@@ -174,7 +207,7 @@ def build_damage_table(champion, target, rune=None) -> DamageTable:
     # Grasp proc
     if rune and isinstance(rune, GraspOfTheUndying):
         proc = rune.proc_damage(champion.total_HP, is_melee=champion.is_melee)
-        table.grasp_proc = calculate_damage(proc, target, champion=champion)["total_damage"]
+        table.grasp_proc = _amp(calculate_damage(proc, target, champion=champion)["total_damage"])
         heal = rune.healing(champion.total_HP, is_melee=champion.is_melee)
         table.grasp_heal = heal["heal"]
 
@@ -195,7 +228,10 @@ def _rune_variant(state: DPSState, rune) -> str:
 
 
 def _get_action_damage(action: str, table: DamageTable, state: DPSState, rune) -> float:
-    """Look up pre-computed damage for an action given current rune state."""
+    """Look up pre-computed damage for an action given current rune state.
+
+    Applies Shojin dynamic amp on top for ability/proc actions.
+    """
     variant = _rune_variant(state, rune)
 
     lookup = {
@@ -210,20 +246,39 @@ def _get_action_damage(action: str, table: DamageTable, state: DPSState, rune) -
 
     base, pta, conq = lookup[action]
     if variant == "conq":
-        return conq
-    if variant == "pta":
-        return pta
-    return base
+        dmg = conq
+    elif variant == "pta":
+        dmg = pta
+    else:
+        dmg = base
+
+    # Apply dynamic Shojin amp for ability/proc actions
+    if table.shojin_amp_per_stack > 0 and action in ("Q", "W", "E_FIRST", "E_CRIT"):
+        shojin_amp = state.shojin_stacks * table.shojin_amp_per_stack
+        dmg = round(dmg * (1.0 + shojin_amp), 2)
+
+    return dmg
 
 
 def _get_vital_damage(table: DamageTable, state: DPSState, rune) -> Tuple[float, float]:
-    """Return (vital_damage, vital_heal) for the current rune state."""
+    """Return (vital_damage, vital_heal) for the current rune state.
+
+    Shojin amp applies to vital (proc) damage.
+    """
     variant = _rune_variant(state, rune)
     if variant == "conq":
-        return table.passive_conq, table.passive_heal_conq
-    if variant == "pta":
-        return table.passive_pta, table.passive_heal
-    return table.passive, table.passive_heal
+        dmg, heal = table.passive_conq, table.passive_heal_conq
+    elif variant == "pta":
+        dmg, heal = table.passive_pta, table.passive_heal
+    else:
+        dmg, heal = table.passive, table.passive_heal
+
+    # Shojin amplifies proc damage (vitals)
+    if table.shojin_amp_per_stack > 0:
+        shojin_amp = state.shojin_stacks * table.shojin_amp_per_stack
+        dmg = round(dmg * (1.0 + shojin_amp), 2)
+
+    return dmg, heal
 
 
 def _available_actions(state: DPSState, table: DamageTable, time_limit: float) -> List[str]:
@@ -266,6 +321,13 @@ def _available_actions(state: DPSState, table: DamageTable, time_limit: float) -
         actions.append("R_ACTIVATE")
 
     if not actions:
+        actions.append("WAIT")
+    elif state.next_vital_at > t and state.next_vital_at < time_limit:
+        # A vital is about to respawn — offer WAIT so the search can
+        # compare "use ability now without vital" vs "wait for vital
+        # then use ability with vital proc (damage + heal + MS)".
+        # In short burst windows where no vital will respawn before
+        # time_limit, this branch is never taken, preserving burst.
         actions.append("WAIT")
 
     return actions
@@ -314,6 +376,8 @@ def _apply_action(
         for cd in [s.q_cd_until, s.w_cd_until, s.e_cd_until]:
             if cd > t:
                 events.append(cd)
+        if s.next_vital_at > t:
+            events.append(s.next_vital_at)
         s.time = min(events)
         return s
 
@@ -342,6 +406,11 @@ def _apply_action(
     hit_time = t  # when damage actually lands (after windup/cast)
     notes = []
     is_on_hit = action in ON_HIT_ACTIONS
+
+    # Shojin: stack is granted AFTER damage (triggering ability does NOT
+    # benefit from its own stack).  We record pre-damage stacks, then
+    # increment after all damage lookups for this action.
+    shojin_granted = False
 
     if action == "AA":
         hit_time = t + wnd_time
@@ -439,6 +508,12 @@ def _apply_action(
         s.grasp_available = False
         notes.append(f"Grasp({round(table.grasp_proc, 1)})")
 
+    # ─── Shojin: grant stack AFTER damage is dealt ───
+    if table.shojin_amp_per_stack > 0 and action in ("Q", "W", "E_FIRST", "E_CRIT"):
+        s.shojin_stacks = min(s.shojin_stacks + 1, s.shojin_max_stacks)
+        shojin_granted = True
+        notes.append(f"Shojin({s.shojin_stacks})")
+
     s.damage_so_far += total_action_damage
     s.actions.append((t, action, round(total_action_damage, 2), notes))
     return s
@@ -529,8 +604,19 @@ def _greedy_search(
 
         for action in actions:
             if action == "WAIT":
-                continue
-            if action == "E_ACTIVATE":
+                # Score WAIT by the vital value it unlocks, discounted by
+                # the time spent idling.  If vital respawns soon, the
+                # damage + heal payoff is worth the wait.
+                if state.next_vital_at > state.time and state.next_vital_at < time_limit:
+                    wait_duration = state.next_vital_at - state.time
+                    vital_dmg, vital_heal = _get_vital_damage(table, state, rune)
+                    # Value = vital damage + heal value, penalised by wait
+                    # as opportunity cost (lost AA DPS during idle time)
+                    lost_dps = table.aa / max(champion.attack_interval(), 0.3)
+                    score = (vital_dmg + vital_heal) - wait_duration * lost_dps
+                else:
+                    continue  # no vital to wait for
+            elif action == "E_ACTIVATE":
                 score = table.e_crit * 2  # prioritize enabling crit
             elif action == "R_ACTIVATE":
                 # R gives 4 vitals; estimate value as ~3 extra vital procs
@@ -591,6 +677,8 @@ def optimize_dps(
     rune=None,
     r_active: bool = False,
     bonus_as: float = 0.0,
+    damage_modifiers=None,
+    items=None,
 ) -> Dict[str, Any]:
     """Find the action sequence that maximizes damage in time_limit seconds.
 
@@ -604,6 +692,8 @@ def optimize_dps(
         rune: Optional keystone rune instance
         r_active: If True, R is pre-activated (4 vitals available immediately)
         bonus_as: Extra bonus attack speed % from items
+        damage_modifiers: Static modifiers [{"name": str, "amp": float}, ...]
+        items: Item instances with dynamic effects (e.g. SpearOfShojin)
 
     Returns:
         Dict with total_damage, dps, total_healing, timeline, sequence
@@ -612,9 +702,21 @@ def optimize_dps(
         champion.add_stats(bonus_AS=bonus_as)
 
     try:
-        table = build_damage_table(champion, target, rune=rune)
+        table = build_damage_table(
+            champion, target, rune=rune,
+            damage_modifiers=damage_modifiers, items=items,
+        )
 
         root = DPSState()
+
+        # Init Shojin state
+        if items:
+            from .items import SpearOfShojin
+            for item in items:
+                if isinstance(item, SpearOfShojin):
+                    root.shojin_stacks = item.stacks
+                    root.shojin_max_stacks = item.max_stacks
+
         if r_active:
             # R was already activated: 4 vitals available immediately, R on cooldown
             root.r_vitals_remaining = 4

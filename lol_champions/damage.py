@@ -99,13 +99,18 @@ def calculate_damage(
     damage_amp: float = 0.0,
     flat_reduction: float = 0.0,
     pct_reduction: float = 0.0,
+    damage_modifiers: List[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """Calculate post-mitigation damage for an ability against a target.
 
     Reads 'raw_damage' and 'damage_type' from ability_data dict.
     Reads penetration stats from champion if provided.
     Applies mitigation from target's armor/MR.
-    Applies optional damage_amp as a multiplier.
+    Applies optional damage_amp and damage_modifiers as multipliers.
+
+    Damage modifiers (Last Stand, Shojin, Coup de Grace, etc.) stack
+    multiplicatively with each other and with damage_amp:
+        total = post_mitigation × (1 + damage_amp) × Π(1 + mod["amp"])
 
     Args:
         ability_data: Dict returned by champion ability method (must have
@@ -116,10 +121,14 @@ def calculate_damage(
         damage_amp: Fractional damage amplification (0.08 = 8% more damage)
         flat_reduction: Additional flat resistance reduction
         pct_reduction: Additional percentage resistance reduction
+        damage_modifiers: List of {"name": str, "amp": float} dicts.
+                          Each amp is a decimal (0.11 = 11%). Applied
+                          multiplicatively.
 
     Returns:
         Dict with: raw_damage, damage_type, effective_resistance,
-        post_mitigation_damage, damage_reduction_pct, damage_amp, total_damage
+        post_mitigation_damage, damage_reduction_pct, damage_amp,
+        damage_modifiers, total_amp_multiplier, total_damage
 
     Raises:
         ValueError: If ability_data is missing required keys
@@ -168,8 +177,13 @@ def calculate_damage(
             (1.0 - post_mitigation / raw_damage) * 100, 2
         ) if raw_damage > 0 else 0.0
 
-    # Apply damage amplification (e.g., PtA exposure)
-    total_damage = round(post_mitigation * (1.0 + damage_amp), 2)
+    # Apply damage amplification (PtA exposure, Last Stand, Shojin, etc.)
+    # All sources stack multiplicatively.
+    multiplier = 1.0 + damage_amp
+    mods = damage_modifiers or []
+    for mod in mods:
+        multiplier *= (1.0 + mod.get("amp", 0.0))
+    total_damage = round(post_mitigation * multiplier, 2)
 
     return {
         "raw_damage": raw_damage,
@@ -178,6 +192,8 @@ def calculate_damage(
         "post_mitigation_damage": post_mitigation,
         "damage_reduction_pct": reduction_pct,
         "damage_amp": damage_amp,
+        "damage_modifiers": mods,
+        "total_amp_multiplier": round(multiplier, 4),
         "total_damage": total_damage,
     }
 
@@ -206,6 +222,8 @@ def calculate_combo(
     target,
     steps: List[str],
     rune=None,
+    damage_modifiers: List[Dict[str, Any]] = None,
+    items: list = None,
 ) -> Dict[str, Any]:
     """Calculate total damage from a combo sequence.
 
@@ -216,6 +234,12 @@ def calculate_combo(
     - Grasp: first on-hit deals bonus magic damage and heals.
     - HoB: noted but no per-step damage modification.
 
+    Item passives tracked per-step:
+    - Spear of Shojin: stacks on ability damage, amplifies ability/proc damage.
+
+    Static damage modifiers (Last Stand, Coup de Grace, etc.) apply to every
+    step multiplicatively.
+
     On-hit steps (stack PtA / trigger Grasp): AA, Q, E.
 
     Args:
@@ -223,11 +247,15 @@ def calculate_combo(
         target: Target instance
         steps: List of step names, e.g. ["AA", "Q", "passive", "AA", "E"]
         rune: Optional rune instance
+        damage_modifiers: Static modifiers applied every step
+                          [{"name": str, "amp": float}, ...]
+        items: List of item instances (e.g. [SpearOfShojin(stacks=0)])
 
     Returns:
         Dict with per-step breakdown, totals, and healing.
     """
     from .runes import PressTheAttack, Conqueror, GraspOfTheUndying
+    from .items import SpearOfShojin
 
     # Rune state
     pta_hits = 0
@@ -235,6 +263,16 @@ def calculate_combo(
     conq_stacks = 0
     conq_bonus_ad = 0.0
     grasp_available = True
+
+    # Item state
+    shojin = None
+    if items:
+        for item in items:
+            if isinstance(item, SpearOfShojin):
+                shojin = SpearOfShojin(stacks=item.stacks)  # copy
+
+    # Static modifiers (Last Stand, Coup de Grace, etc.)
+    static_mods = damage_modifiers or []
 
     step_results = []
     total_healing = 0.0
@@ -259,14 +297,31 @@ def calculate_combo(
             # Damage amp from PtA exposure
             damage_amp = 0.08 if pta_exposed else 0.0
 
-            dmg = calculate_damage(ability_data, target, champion=champion, damage_amp=damage_amp)
+            # Build per-step modifiers: static + Shojin (if applicable)
+            # Shojin: triggering ability does NOT benefit from its own stack.
+            # Apply current stacks first, then grant the new stack after.
+            step_mods = list(static_mods)  # copy
+            if shojin and SpearOfShojin.is_amplified(step):
+                step_mods.append(shojin.modifier_dict())
+
+            dmg = calculate_damage(
+                ability_data, target, champion=champion,
+                damage_amp=damage_amp, damage_modifiers=step_mods,
+            )
+
+            # Grant Shojin stack AFTER damage is calculated
+            if shojin and SpearOfShojin.grants_stack(step):
+                shojin.add_stack()
 
             entry = {
                 "step": step,
                 "raw_damage": dmg["raw_damage"],
                 "damage_type": dmg["damage_type"],
                 "post_mitigation": dmg["total_damage"],
+                "amp_multiplier": dmg["total_amp_multiplier"],
             }
+            if shojin:
+                entry["shojin_stacks"] = shojin.stacks
 
             # Collect healing from passive
             if step == "PASSIVE":

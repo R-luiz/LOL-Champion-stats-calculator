@@ -10,18 +10,21 @@ Use this as your system prompt when asking Fiora damage questions:
 >
 > **Rules:**
 > 1. Never ask clarifying questions. Use reasonable defaults for anything not specified: level 9, Q rank 5, E rank 3, W rank 1, R rank 1, 50 bonus AD, 80 target armor, 50 target MR, 2000 target HP.
-> 2. Translate the user's LoL language into CLI flags. "I have Triforce" → `--bonus-ad 45 --bonus-as 33`. "Enemy has Plated Steelcaps + 2 cloth armors" → `--target-armor 110`. Look up item stats if needed.
+> 2. Translate the user's LoL language into CLI flags. "I have Triforce" → `--bonus-ad 45 --bonus-as 33`. "I have Spear of Shojin" → `--bonus-ad 45 --bonus-hp 450 --shojin-stacks 0` (stacks start at 0 in DPS/combo, set higher for mid-fight snapshots). "Enemy has Plated Steelcaps + 2 cloth armors" → `--target-armor 110`. Look up item stats if needed.
 > 3. Pick the right mode automatically:
 >    - "How much does Q do?" → default mode (no --combo, no --time)
 >    - "How much damage does AA Q passive AA E AA do?" → `--combo "AA Q passive AA E AA"`
 >    - "What's my max damage in 5 seconds?" or "DPS in a 5s trade?" → `--time 5`
 > 4. Always include the rune flag if the user mentions a keystone. Map common names: "PtA" / "Press the Attack" → `--rune pta`, "Conq" → `--rune conqueror`, "HoB" → `--rune hob`, "Grasp" → `--rune grasp`.
-> 5. For DPS mode (`--time`), include `--bonus-as` if the user has attack speed items. Use `--r-active` only if R was already cast before the fight (4 vitals immediately). Without `--r-active`, the optimizer will still activate R mid-fight on its own if R is ranked — so just having `--r 1` is enough for "I ult them" or "all-in" scenarios.
-> 6. Answer with the final number first (e.g. "Q deals 91.67 post-mitigation damage"), then optionally a one-line breakdown. Do not dump raw JSON.
-> 7. Rune interactions are automatic: PtA stacks on AA/Q/E and procs on 3rd hit with 8% amp after; Conqueror stacks +2 per action, grants bonus AD at 12 stacks which also increases vital true damage; Grasp procs on first on-hit. In DPS mode, vitals auto-proc on damaging actions when available (2.25s respawn). In combo mode, you must explicitly include `passive` steps where vitals would proc.
-> 8. E in combos = Bladework crit-empowered auto. In DPS mode, E is split into E_ACTIVATE (instant, resets AA timer) + E_FIRST (non-crit empowered auto) + E_CRIT (guaranteed crit). R_ACTIVATE is used automatically when optimal.
-> 9. DPS output includes a `timeline` array with per-action timestamps and a `sequence` string. Use these to describe the optimal rotation (e.g. "E > E_FIRST > Q > E_CRIT > AA > AA" at specific timings).
-> 10. If the user asks to compare scenarios, run multiple commands and present a comparison table.
+> 5. Add minor rune flags when mentioned: "Last Stand" → `--last-stand MISSING_HP_PCT` (e.g. `--last-stand 50` means 50% HP missing = 50% current HP). "Coup de Grace" → `--coup-de-grace TARGET_HP_PCT` (e.g. `--coup-de-grace 35` means target is at 35% HP). "Cut Down" → `--cut-down` (auto-calculated from target/champion HP difference). If the user says "I'm low" or "execute range", use `--last-stand 70` or `--coup-de-grace 30` as reasonable estimates.
+> 6. For DPS mode (`--time`), include `--bonus-as` if the user has attack speed items. Use `--r-active` only if R was already cast before the fight (4 vitals immediately). Without `--r-active`, the optimizer will still activate R mid-fight on its own if R is ranked — so just having `--r 1` is enough for "I ult them" or "all-in" scenarios.
+> 7. Answer with the final number first (e.g. "Q deals 91.67 post-mitigation damage"), then optionally a one-line breakdown. Do not dump raw JSON.
+> 8. Rune interactions are automatic: PtA stacks on AA/Q/E and procs on 3rd hit with 8% amp after; Conqueror stacks +2 per action, grants bonus AD at 12 stacks which also increases vital true damage; Grasp procs on first on-hit. In DPS mode, vitals auto-proc on damaging actions when available (2.25s respawn); the optimizer will wait for vital respawn when the vital value (damage + heal) outweighs the time spent idle. In combo mode, you must explicitly include `passive` steps where vitals would proc.
+> 9. E in combos = Bladework crit-empowered auto. In DPS mode, E is split into E_ACTIVATE (instant, resets AA timer) + E_FIRST (non-crit empowered auto) + E_CRIT (guaranteed crit). R_ACTIVATE is used automatically when optimal.
+> 10. DPS output includes a `timeline` array with per-action timestamps and a `sequence` string. Use these to describe the optimal rotation (e.g. "E > E_FIRST > Q > E_CRIT > AA > AA" at specific timings).
+> 11. Damage modifiers (Last Stand, Coup de Grace, Cut Down, Shojin) stack multiplicatively with each other and with rune amps. The output includes `amp_multiplier` per step and `damage_modifiers` in the top-level result.
+> 12. Shojin in combo/DPS mode tracks stacks dynamically: starts at `--shojin-stacks N`, each ability cast grants a stack (max 4), the triggering ability does NOT benefit from its own stack. In default mode (single ability), the stacks value is applied as a static amp.
+> 13. If the user asks to compare scenarios, run multiple commands and present a comparison table.
 
 ## Quick Start
 
@@ -73,9 +76,27 @@ python cli.py [champion options] [item options] [target options] [--rune RUNE] [
 | `--target-armor` | 80 | Target's total armor |
 | `--target-mr` | 50 | Target's total magic resistance |
 
-### Rune Option
+### Rune Options
 
 `--rune RUNE` where RUNE is one of: `pta`, `conqueror`, `hob`, `grasp`
+
+#### Minor Runes (Damage Modifiers)
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--last-stand` | -- | Last Stand: your missing HP % (0-100). 5% amp at 60% HP, scales to 11% at 30% HP |
+| `--coup-de-grace` | -- | Coup de Grace: target current HP % (0-100). 8% amp if target < 40% HP |
+| `--cut-down` | false | Cut Down: 5-15% amp based on target vs champion max HP difference (auto-calculated) |
+
+All minor rune amps stack multiplicatively with each other and with keystone effects.
+
+### Item Passives
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--shojin-stacks` | -- | Spear of Shojin initial stacks (0-4). 3% per stack on ability/proc damage. In combo/DPS mode, stacks build dynamically per ability cast |
+
+Remember to also add Shojin's raw stats: `--bonus-ad 45 --bonus-hp 450`.
 
 ### Combo Option
 
@@ -101,7 +122,9 @@ In DPS mode, E is automatically split into three phases: **E_ACTIVATE** (instant
 | `--bonus-as` | 0 | Bonus attack speed % from items (e.g. 35 for 35%) |
 | `--r-active` | false | R is active (4 vitals available immediately) |
 
-DPS mode uses branch-and-bound search (<=10s) or greedy heuristic (>10s) to find the action sequence that maximizes total damage. It accounts for attack speed, ability cooldowns, cast times, AA resets (Q and E), vital respawn timing (2.25s between passive procs), R activation (4 vitals after 0.5s delay), E two-attack model (E_FIRST + E_CRIT with bonus AS only during empowered attacks), and all rune interactions.
+DPS mode uses branch-and-bound search (<=10s) or greedy heuristic (>10s) to find the action sequence that maximizes total damage. It accounts for attack speed, ability cooldowns, cast times, AA resets (Q and E), vital respawn timing (2.25s between passive procs), R activation (4 vitals after 0.5s delay), E two-attack model (E_FIRST + E_CRIT with bonus AS only during empowered attacks), all rune interactions, and damage modifiers (Last Stand, Coup de Grace, Cut Down, Spear of Shojin).
+
+The optimizer maximizes vital procs by considering waiting for vital respawn when the vital value (damage + heal) outweighs the idle time cost. In short burst windows where no vital will respawn, it prioritizes raw burst instead. Shojin stacks build dynamically per ability cast during the optimized sequence.
 
 ## Combo Examples
 
@@ -148,6 +171,26 @@ python cli.py --time 8 --level 11 --q 5 --w 1 --e 3 --r 2 --bonus-ad 120 --targe
 python cli.py --time 15 --level 14 --q 5 --e 5 --r 2 --bonus-ad 200 --bonus-as 50 --target-armor 150
 ```
 
+### Spear of Shojin combo (stacks build per ability cast)
+```bash
+python cli.py --combo "Q passive AA E AA Q passive" --level 9 --q 5 --e 3 --bonus-ad 95 --bonus-hp 450 --target-armor 80 --shojin-stacks 0
+```
+
+### DPS with Last Stand at 50% missing HP + Shojin
+```bash
+python cli.py --time 6 --level 14 --q 5 --e 5 --r 2 --bonus-ad 195 --bonus-hp 450 --target-armor 100 --target-hp 3000 --last-stand 50 --shojin-stacks 0 --r-active
+```
+
+### Coup de Grace vs low HP target
+```bash
+python cli.py --level 9 --q 5 --bonus-ad 50 --target-armor 80 --target-hp 800 --coup-de-grace 30
+```
+
+### Cut Down vs tanky target
+```bash
+python cli.py --time 8 --level 14 --q 5 --e 5 --r 2 --bonus-ad 150 --target-armor 200 --target-hp 4000 --cut-down --rune conqueror
+```
+
 ## How Runes Work
 
 Rune interactions are fully tracked in both combo and DPS modes.
@@ -159,6 +202,20 @@ Rune interactions are fully tracked in both combo and DPS modes.
 **Hail of Blades (hob)**: Grants 160% bonus attack speed (melee) for 3 attacks. In DPS mode, this reduces attack intervals during burst, allowing faster AA/E_CRIT weaving.
 
 **Grasp of the Undying (grasp)**: First on-hit action deals 3.5% of Fiora's max HP as bonus magic damage and heals for 1.3% max HP. Also grants +5 permanent HP per proc.
+
+### Minor Runes (Precision Row 3)
+
+These are damage amplifiers that stack multiplicatively with keystones and each other.
+
+**Last Stand**: 5% increased damage below 60% HP, scaling to 11% at 30% HP. Linear interpolation between thresholds. Applies to all damage types including true damage (since patch 15.3).
+
+**Coup de Grace**: 8% increased damage to targets below 40% max HP. Binary threshold — full amp or nothing.
+
+**Cut Down**: 5-15% increased damage to targets with more max HP than you. Scales linearly from 5% (target has 10% more HP) to 15% (100% more HP).
+
+### Item Passives
+
+**Spear of Shojin**: Focused Will grants a stack per ability cast (max 4). Each stack amplifies ability and proc damage by 3% (up to 12%). Does NOT amplify basic auto attacks. Does NOT grant stacks from passive procs. The triggering ability does NOT benefit from its own stack — the first ability cast deals unamplified damage, the second benefits from 1 stack, etc.
 
 ## LoL Damage Glossary
 
@@ -206,6 +263,8 @@ Example: 200 raw physical damage vs 100 armor = 200 * (100/200) = 100 damage tak
 ```python
 from lol_champions import Fiora, Target, calculate_damage, calculate_combo, optimize_dps
 from lol_champions.runes import PressTheAttack
+from lol_champions.runes import LastStand, CoupDeGrace, CutDown
+from lol_champions.items import SpearOfShojin
 
 fiora = Fiora()
 for _ in range(8): fiora.level_up()
@@ -219,17 +278,28 @@ target = Target(armor=80, mr=50, max_hp=2000)
 result = calculate_damage(fiora.Q(), target, champion=fiora)
 print(result["total_damage"])  # post-mitigation damage
 
-# Auto attack
-aa_result = calculate_damage(fiora.auto_attack(), target, champion=fiora)
+# Single ability with damage modifiers
+ls = LastStand()
+mods = [{"name": "Last Stand", "amp": ls.damage_amp(missing_hp_pct=50)}]
+result = calculate_damage(fiora.Q(), target, champion=fiora, damage_modifiers=mods)
+print(result["total_damage"])         # amped damage
+print(result["total_amp_multiplier"]) # total multiplier applied
 
-# Full combo with rune
+# Full combo with rune + Shojin (stacks build dynamically)
 pta = PressTheAttack()
-combo = calculate_combo(fiora, target, ["AA", "Q", "passive", "AA", "E", "AA"], rune=pta)
+shojin = SpearOfShojin(stacks=0)
+combo = calculate_combo(
+    fiora, target, ["AA", "Q", "passive", "AA", "E", "AA"],
+    rune=pta, damage_modifiers=mods, items=[shojin],
+)
 print(combo["total_damage"])   # total combo damage including rune procs
 print(combo["total_healing"])  # total healing from vitals + rune
 
 # DPS optimizer: max damage in 5 seconds
-dps = optimize_dps(fiora, target, time_limit=5.0, rune=pta, bonus_as=35)
+dps = optimize_dps(
+    fiora, target, time_limit=5.0, rune=pta, bonus_as=35,
+    damage_modifiers=mods, items=[SpearOfShojin(stacks=0)],
+)
 print(dps["total_damage"])     # optimal total damage
 print(dps["dps"])              # damage per second
 print(dps["sequence"])         # optimal action sequence
