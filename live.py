@@ -48,6 +48,43 @@ MINOR_RUNE_MAP = {
 # ─── Item IDs with modeled passives ───────────────────────────────────
 SHOJIN_ITEM_ID = 3161
 
+# ─── Rune stat shard HP estimation ───────────────────────────────────
+# The Live Client API doesn't expose enemy stat shards.  On first
+# detection of a target we ask the user for their actual HP, then
+# deduce which shard combo they're running so it scales correctly
+# as they level up.
+#
+# Row 2 (Flex):    0 HP (adaptive / movespeed)  OR  scaling +10-180
+# Row 3 (Defense): 0 HP (tenacity)  OR  +65 flat  OR  scaling +10-180
+_SHARD_COMBOS = [
+    ("no HP shards",       lambda lvl: 0),
+    ("+65 flat",           lambda lvl: 65),
+    ("1x scaling",         lambda lvl: 10 + 10 * (lvl - 1)),
+    ("scaling + flat 65",  lambda lvl: 75 + 10 * (lvl - 1)),
+    ("2x scaling",         lambda lvl: 20 + 20 * (lvl - 1)),
+]
+
+
+def _match_shard_combo(residual_hp: float, level: int) -> tuple:
+    """Find the shard combo whose HP best explains the residual.
+
+    Returns (combo_index, extra_flat_hp) where extra_flat_hp is the
+    unexplained remainder (champion passives, Overgrowth, etc.).
+    """
+    best_idx = 0
+    best_extra = residual_hp
+    for i, (_, hp_func) in enumerate(_SHARD_COMBOS):
+        extra = residual_hp - hp_func(level)
+        if abs(extra) < abs(best_extra):
+            best_idx = i
+            best_extra = extra
+    return best_idx, round(best_extra, 1)
+
+
+def _shard_hp_at_level(combo_idx: int, level: int) -> float:
+    """Compute shard HP bonus for a calibrated combo at *level*."""
+    return _SHARD_COMBOS[combo_idx][1](level)
+
 
 def _build_fiora_from_api(player_data: dict) -> tuple:
     """Reconstruct a Fiora instance from Live Client Data API response.
@@ -176,8 +213,9 @@ def _detect_items_from_playerlist(player_entry: dict, ddragon: DataDragon | None
     return items_list, item_names, has_shojin, bonus_as
 
 
-def _build_target(args, enemy_entry: dict | None, ddragon: DataDragon | None) -> tuple:
-    """Build Target from enemy data + manual overrides.
+def _build_target(args, enemy_entry: dict | None, ddragon: DataDragon | None,
+                   calibration: dict | None = None) -> tuple:
+    """Build Target from enemy data + manual overrides + calibration.
 
     Returns:
         (target, target_label) tuple.
@@ -194,15 +232,24 @@ def _build_target(args, enemy_entry: dict | None, ddragon: DataDragon | None) ->
         item_ids = [it["itemID"] for it in enemy_entry.get("items", [])]
 
         try:
+            # Base + items only (no shard guess)
             auto_target = ddragon.estimate_target(champ_name, level, item_ids)
-            # Use auto values as defaults, manual overrides take precedence
+
+            # Add calibrated shard HP if available
+            bonus_hp = 0.0
+            shard_label = "uncalibrated"
+            if calibration and champ_name in calibration:
+                cal = calibration[champ_name]
+                bonus_hp = _shard_hp_at_level(cal["combo_idx"], level) + cal["extra_hp"]
+                shard_label = _SHARD_COMBOS[cal["combo_idx"]][0]
+
             if args.target_hp is None:
-                target_hp = round(auto_target.max_hp, 1)
+                target_hp = round(auto_target.max_hp + bonus_hp, 1)
             if args.target_armor is None:
                 target_armor = round(auto_target.armor, 1)
             if args.target_mr is None:
                 target_mr = round(auto_target.mr, 1)
-            label = f"{champ_name} (Lv{level})"
+            label = f"{champ_name} (Lv{level}, {shard_label})"
         except ValueError:
             label = f"{champ_name}? (unknown)"
 
@@ -341,9 +388,9 @@ def _display(fiora, target, target_label, keystone_name, minor_runes,
     as_val = fiora.total_attack_speed()
 
     # Header
-    print(f"\033[1m{'═' * 56}\033[0m")
+    print(f"\033[1m{'=' * 56}\033[0m")
     print(f"\033[1m  Fiora Live Damage\033[0m   ({_format_time(game_time)} game time)")
-    print(f"\033[1m{'═' * 56}\033[0m")
+    print(f"\033[1m{'=' * 56}\033[0m")
 
     # Champion info
     q = fiora.Q_ability.current_level
@@ -375,7 +422,7 @@ def _display(fiora, target, target_label, keystone_name, minor_runes,
     # Target
     print(f"  Target: {target_label}")
     print(f"  Armor: {target.armor:.0f} | MR: {target.mr:.0f} | HP: {target.max_hp:.0f}")
-    print(f"{'─' * 56}")
+    print(f"{'-' * 56}")
 
     # Damage values
     for name in ("Q", "E crit", "Vital", "AA", "W"):
@@ -390,7 +437,7 @@ def _display(fiora, target, target_label, keystone_name, minor_runes,
 
     # DPS
     if dps_result:
-        print(f"{'─' * 56}")
+        print(f"{'-' * 56}")
         total = dps_result.get("total_damage", 0)
         dps = dps_result.get("dps", 0)
         seq = dps_result.get("sequence", "")
@@ -401,7 +448,7 @@ def _display(fiora, target, target_label, keystone_name, minor_runes,
                 seq = seq[:45] + "..."
             print(f"  Seq: {seq}")
 
-    print(f"\033[1m{'═' * 56}\033[0m")
+    print(f"\033[1m{'=' * 56}\033[0m")
     print("  Ctrl+C to stop")
 
 
@@ -437,11 +484,15 @@ def main():
     except Exception as e:
         print(f"Warning: Could not load Data Dragon ({e}). Target auto-estimation disabled.")
 
+    # Calibration cache: {champ_name: {"combo_idx": int, "extra_hp": float}}
+    target_calibration = {}
+
     # Main poll loop
     try:
         while True:
             if not is_game_active():
                 print("\nGame ended. Waiting for next game...")
+                target_calibration.clear()
                 while not is_game_active():
                     time.sleep(5)
                 print("Game detected!")
@@ -474,7 +525,39 @@ def main():
 
             # Find enemy target
             enemy = _find_enemy(player_list, active_name, args.target)
-            target, target_label = _build_target(args, enemy, ddragon)
+
+            # Calibrate new targets: ask user for actual HP once per champion
+            if enemy and ddragon:
+                champ_name = enemy.get("championName", "")
+                level = enemy.get("level", 1)
+                if champ_name and champ_name not in target_calibration:
+                    item_ids = [it["itemID"] for it in enemy.get("items", [])]
+                    try:
+                        raw = ddragon.estimate_target(champ_name, level, item_ids)
+                        print(f"\n  New target detected: {champ_name} (Lv{level})")
+                        print(f"  Base+items HP estimate: {raw.max_hp:.0f}")
+                        hp_input = input(f"  Enter {champ_name}'s actual max HP: ").strip()
+                        actual_hp = float(hp_input)
+                        residual = actual_hp - raw.max_hp
+                        combo_idx, extra = _match_shard_combo(residual, level)
+                        target_calibration[champ_name] = {
+                            "combo_idx": combo_idx, "extra_hp": extra,
+                        }
+                        combo_name = _SHARD_COMBOS[combo_idx][0]
+                        msg = f"  -> Shards: {combo_name}"
+                        if abs(extra) > 5:
+                            msg += f" + {extra:.0f} extra HP (passives/runes)"
+                        print(msg)
+                        time.sleep(1.5)
+                    except (ValueError, EOFError):
+                        # Bad input or skipped — fall back to common default
+                        target_calibration[champ_name] = {
+                            "combo_idx": 3, "extra_hp": 0,  # scaling + flat 65
+                        }
+                        print("  -> Using default estimate (scaling + flat 65)")
+                        time.sleep(1)
+
+            target, target_label = _build_target(args, enemy, ddragon, target_calibration)
 
             # Detect runes
             keystone_name, keystone = _detect_keystone(player_data)

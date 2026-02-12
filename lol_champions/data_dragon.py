@@ -142,7 +142,8 @@ class DataDragon:
                         item_ids: list[int]) -> Target:
         """Estimate a Target's defensive stats from champion + level + items.
 
-        Sums champion base stats at level with item stat bonuses.
+        Returns base stats at level + item stat bonuses only.
+        Rune shard HP is handled separately by live.py calibration.
 
         Args:
             champion_name: Enemy champion name.
