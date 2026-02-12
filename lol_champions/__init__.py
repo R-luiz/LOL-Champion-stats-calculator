@@ -9,6 +9,8 @@ from .runes import PressTheAttack, Conqueror, HailOfBlades, GraspOfTheUndying
 from .runes import LastStand, CoupDeGrace, CutDown
 from .items import SpearOfShojin
 from .dps import optimize_dps
+from .live_client import is_game_active, get_active_player, get_player_list, get_game_stats
+from .data_dragon import DataDragon
 
 __all__ = [
     'Champion', 'Ability', 'Fiora',
@@ -18,5 +20,7 @@ __all__ = [
     'LastStand', 'CoupDeGrace', 'CutDown',
     'SpearOfShojin',
     'optimize_dps',
+    'is_game_active', 'get_active_player', 'get_player_list', 'get_game_stats',
+    'DataDragon',
 ]
-__version__ = '1.3.0'
+__version__ = '1.4.0'
