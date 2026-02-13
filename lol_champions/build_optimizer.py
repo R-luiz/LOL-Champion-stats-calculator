@@ -391,6 +391,7 @@ def _evaluate_build(champion, target, item_names, time_limit,
         "dps": result["dps"],
         "total_healing": result["total_healing"],
         "sequence": result["sequence"],
+        "timeline": result["timeline"],
         "stats_applied": stats,
     }
 
