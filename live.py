@@ -322,7 +322,8 @@ def _build_modifiers(fiora, target, minor_runes: set,
     return mods
 
 
-def _compute_damage(fiora, target, mods, items_list, has_shojin):
+def _compute_damage(fiora, target, mods, items_list, has_shojin,
+                     keystone_name=None, keystone=None):
     """Compute single-ability damages. Returns dict of results."""
     results = {}
 
@@ -333,12 +334,21 @@ def _compute_damage(fiora, target, mods, items_list, has_shojin):
             if isinstance(item, SpearOfShojin) and item.damage_amp() > 0:
                 shojin_mod = item.modifier_dict()
 
+    # PTA exposure modifier (8% amp after proc)
+    pta_mod = None
+    if keystone_name == "pta" and keystone:
+        pta_mod = {"name": "PtA Exposure", "amp": 0.08}
+
     # Q
     q_data = fiora.Q()
     if "error" not in q_data:
         q_mods = mods + ([shojin_mod] if shojin_mod else [])
         q_dmg = calculate_damage(q_data, target, champion=fiora, damage_modifiers=q_mods)
         results["Q"] = (q_dmg["total_damage"], "physical")
+        if pta_mod:
+            q_amped = calculate_damage(q_data, target, champion=fiora,
+                                       damage_modifiers=q_mods + [pta_mod])
+            results["Q+pta"] = (q_amped["total_damage"], "physical")
 
     # W
     w_data = fiora.W()
@@ -346,6 +356,10 @@ def _compute_damage(fiora, target, mods, items_list, has_shojin):
         w_mods = mods + ([shojin_mod] if shojin_mod else [])
         w_dmg = calculate_damage(w_data, target, champion=fiora, damage_modifiers=w_mods)
         results["W"] = (w_dmg["total_damage"], "magic")
+        if pta_mod:
+            w_amped = calculate_damage(w_data, target, champion=fiora,
+                                       damage_modifiers=w_mods + [pta_mod])
+            results["W+pta"] = (w_amped["total_damage"], "magic")
 
     # E (crit)
     e_data = fiora.E()
@@ -353,6 +367,10 @@ def _compute_damage(fiora, target, mods, items_list, has_shojin):
         e_mods = mods + ([shojin_mod] if shojin_mod else [])
         e_dmg = calculate_damage(e_data, target, champion=fiora, damage_modifiers=e_mods)
         results["E crit"] = (e_dmg["total_damage"], "physical")
+        if pta_mod:
+            e_amped = calculate_damage(e_data, target, champion=fiora,
+                                       damage_modifiers=e_mods + [pta_mod])
+            results["E crit+pta"] = (e_amped["total_damage"], "physical")
 
     # Passive (vital)
     passive_mods = mods + ([shojin_mod] if shojin_mod else [])
@@ -361,11 +379,25 @@ def _compute_damage(fiora, target, mods, items_list, has_shojin):
                                    damage_modifiers=passive_mods)
     results["Vital"] = (passive_dmg["total_damage"], "true")
     results["_vital_heal"] = passive_data["heal"]
+    if pta_mod:
+        vital_amped = calculate_damage(passive_data, target, champion=fiora,
+                                       damage_modifiers=passive_mods + [pta_mod])
+        results["Vital+pta"] = (vital_amped["total_damage"], "true")
 
     # AA
     aa_data = fiora.auto_attack()
     aa_dmg = calculate_damage(aa_data, target, champion=fiora, damage_modifiers=mods)
     results["AA"] = (aa_dmg["total_damage"], "physical")
+    if pta_mod:
+        aa_amped = calculate_damage(aa_data, target, champion=fiora,
+                                    damage_modifiers=mods + [pta_mod])
+        results["AA+pta"] = (aa_amped["total_damage"], "physical")
+
+    # PTA proc damage
+    if keystone_name == "pta" and keystone:
+        proc = keystone.proc_damage(fiora.level, fiora.bonus_AD, fiora.bonus_AP)
+        proc_dmg = calculate_damage(proc, target, champion=fiora, damage_modifiers=mods)
+        results["PtA proc"] = (proc_dmg["total_damage"], proc["damage_type"])
 
     return results
 
@@ -379,7 +411,7 @@ def _format_time(seconds: float) -> str:
 
 def _display(fiora, target, target_label, keystone_name, minor_runes,
              current_hp, max_hp, item_names, damages, game_time,
-             dps_result=None):
+             dps_result=None, kill_result=None):
     """Clear screen and print formatted damage summary."""
     # Clear screen
     os.system('cls' if os.name == 'nt' else 'clear')
@@ -425,15 +457,29 @@ def _display(fiora, target, target_label, keystone_name, minor_runes,
     print(f"{'-' * 56}")
 
     # Damage values
+    t_hp = target.max_hp if target.max_hp > 0 else 1
+    has_pta = "PtA proc" in damages
     for name in ("Q", "E crit", "Vital", "AA", "W"):
         if name in damages:
             dmg, dtype = damages[name]
+            pct = dmg / t_hp * 100
             color = {"physical": "\033[33m", "magic": "\033[36m", "true": "\033[37m"}.get(dtype, "")
             reset = "\033[0m"
-            print(f"  {name:<10} {color}{dmg:>8.1f}  {dtype}{reset}")
+            pta_str = ""
+            pta_key = name + "+pta"
+            if has_pta and pta_key in damages:
+                amped, _ = damages[pta_key]
+                pta_pct = amped / t_hp * 100
+                pta_str = f"  \033[31m[PtA: {amped:>7.1f} ({pta_pct:>5.1f}%)]\033[0m"
+            print(f"  {name:<10} {color}{dmg:>8.1f}  ({pct:>5.1f}%){reset}{pta_str}")
 
     if "_vital_heal" in damages:
-        print(f"  {'Vital heal':<10} {damages['_vital_heal']:>8.1f}  hp")
+        print(f"  {'Vital heal':<10} {damages['_vital_heal']:>8.1f}")
+
+    if has_pta:
+        proc_dmg, _ = damages["PtA proc"]
+        proc_pct = proc_dmg / t_hp * 100
+        print(f"  \033[31m{'PtA proc':<10} {proc_dmg:>8.1f}  ({proc_pct:>5.1f}%)\033[0m")
 
     # DPS
     if dps_result:
@@ -447,6 +493,22 @@ def _display(fiora, target, target_label, keystone_name, minor_runes,
             if len(seq) > 48:
                 seq = seq[:45] + "..."
             print(f"  Seq: {seq}")
+
+    # Kill combo
+    if kill_result:
+        # Shorten action names to fit
+        _short = {
+            "E_ACTIVATE": "E", "E_FIRST": "E1", "E_CRIT": "E2",
+            "R_ACTIVATE": "R", "AA": "AA", "Q": "Q", "W": "W", "WAIT": "..",
+        }
+        print(f"{'-' * 56}")
+        kt = kill_result["time"]
+        short_actions = [_short.get(a, a) for a in kill_result["actions"]]
+        seq = " ".join(short_actions)
+        hits = sum(1 for a in kill_result["actions"]
+                   if a not in ("E_ACTIVATE", "R_ACTIVATE", "WAIT"))
+        print(f"  \033[1;32mKILL in {kt:.2f}s ({hits} hits)\033[0m")
+        print(f"  {seq}")
 
     print(f"\033[1m{'=' * 56}\033[0m")
     print("  Ctrl+C to stop")
@@ -567,20 +629,18 @@ def main():
             mods = _build_modifiers(fiora, target, minor_runes, current_hp, max_hp)
 
             # Compute damages
-            damages = _compute_damage(fiora, target, mods, items_list, has_shojin)
+            damages = _compute_damage(fiora, target, mods, items_list, has_shojin,
+                                      keystone_name, keystone)
 
-            # DPS optimizer (optional, expensive)
+            # DPS optimizer (optional)
             dps_result = None
             if args.time:
                 try:
-                    rune_for_dps = keystone
                     buf = io.StringIO()
                     with redirect_stdout(buf):
                         dps_result = optimize_dps(
-                            champion=fiora,
-                            target=target,
-                            time_limit=args.time,
-                            rune=rune_for_dps,
+                            champion=fiora, target=target,
+                            time_limit=args.time, rune=keystone,
                             bonus_as=bonus_as,
                             damage_modifiers=mods if mods else None,
                             items=items_list if items_list else None,
@@ -588,11 +648,43 @@ def main():
                 except Exception:
                     pass
 
+            # Kill combo: find optimal sequence to reach target HP
+            kill_result = None
+            try:
+                buf = io.StringIO()
+                with redirect_stdout(buf):
+                    full = optimize_dps(
+                        champion=fiora, target=target,
+                        time_limit=20.0, rune=keystone,
+                        bonus_as=bonus_as,
+                        damage_modifiers=mods if mods else None,
+                        items=items_list if items_list else None,
+                    )
+                timeline = full.get("timeline", [])
+                cumulative = 0.0
+                kill_actions = []
+                kill_time = None
+                for step in timeline:
+                    dmg = step.get("damage", 0)
+                    cumulative += dmg
+                    kill_actions.append(step["action"])
+                    if cumulative >= target.max_hp:
+                        kill_time = step["time"]
+                        break
+                if kill_time is not None:
+                    kill_result = {
+                        "time": kill_time,
+                        "actions": kill_actions,
+                        "damage": round(cumulative, 1),
+                    }
+            except Exception:
+                pass
+
             # Display
             _display(
                 fiora, target, target_label, keystone_name, minor_runes,
                 current_hp, max_hp, item_names, damages, game_time,
-                dps_result,
+                dps_result, kill_result,
             )
 
             time.sleep(args.interval)
