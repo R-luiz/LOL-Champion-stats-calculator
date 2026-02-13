@@ -1,0 +1,233 @@
+======================================================================
+BUILD OPTIMIZER LOG: 2026-02-13 20:37:31
+======================================================================
+
+Champion: Fiora Level 14
+  AD: 113.9  AP: 0.0  HP: 1896.9  AR: 89.8  MR: 56.8
+  AS: 0.957  Lethality: 0.0  Armor Pen %: 0%  Life Steal: 2%  Omnivamp: 0%
+Target: HP=2000  Armor=65  MR=40
+Time limit: 4.0s
+Rune: Conqueror
+
+======================================================================
+RANKINGS
+======================================================================
+  # 1: Kraken Slayer + Profane Hydra                         733.0 DPS  ( 2932.0 dmg,  581.1 heal)
+  # 2: Blade of the Ruined King + Profane Hydra              724.1 DPS  ( 2896.4 dmg,  718.5 heal)
+  # 3: Profane Hydra + Wit's End                             705.8 DPS  ( 2823.3 dmg,  574.0 heal)
+  # 4: Voltaic Cyclosword + Profane Hydra                    692.9 DPS  ( 2771.5 dmg,  559.1 heal)
+  # 5: Trinity Force + Profane Hydra                         691.3 DPS  ( 2765.1 dmg,  569.8 heal)
+  # 6: Kraken Slayer + Ravenous Hydra                        689.8 DPS  ( 2759.0 dmg,  745.9 heal)
+  # 7: Blade of the Ruined King + Ravenous Hydra             686.1 DPS  ( 2744.3 dmg,  866.6 heal)
+  # 8: Blade of the Ruined King + Kraken Slayer              682.6 DPS  ( 2730.3 dmg,  726.3 heal)
+  # 9: Kraken Slayer + Titanic Hydra                         679.3 DPS  ( 2717.2 dmg,  574.1 heal)
+  #10: Blade of the Ruined King + Titanic Hydra              678.5 DPS  ( 2714.2 dmg,  700.4 heal)
+
+======================================================================
+#1 DETAIL
+======================================================================
+Kraken Slayer + Profane Hydra — Conqueror
+Total: 2931.96 dmg | 732.99 DPS | 581.15 heal
+Sequence: AA > HYDRA_ACTIVE > AA > Q > AA > AA > W > AA > E_ACTIVATE > E_FIRST > E_CRIT > AA
+
+Timeline:
+    0.00s  AA            dmg=  291.9  heal=  88.3  vital(146.4)
+    0.12s  HYDRA_ACTIVE  dmg=  116.4  heal=   0.0  AA-reset, dmg(116)
+    0.12s  AA            dmg=  291.9  heal=  88.3  vital(146.4)
+    0.24s  Q             dmg=  435.3  heal=  91.9  AA-reset, Kraken(133), vital(146.4)
+    0.49s  AA            dmg=  291.9  heal=  88.3  vital(146.4)
+    1.38s  AA            dmg=  145.5  heal=   3.6  
+    1.50s  W             dmg=  107.1  heal=   8.6  
+    2.27s  AA            dmg=  296.8  heal=  31.2  Kraken(133)
+    2.39s  E_ACTIVATE    dmg=    0.0  heal=   0.0  instant, AA-reset
+    2.39s  E_FIRST       dmg=  163.6  heal=  17.2  E-first
+    2.96s  E_CRIT        dmg=  494.7  heal= 132.5  E-crit, vital(167.6)
+    3.53s  AA            dmg=  296.8  heal=  31.2  Kraken(133)
+
+======================================================================
+#2 DETAIL
+======================================================================
+Blade of the Ruined King + Profane Hydra — Conqueror
+Total: 2896.36 dmg | 724.09 DPS | 718.53 heal
+Sequence: AA > Q > AA > W > AA > E_ACTIVATE > E_FIRST > E_CRIT > AA > HYDRA_ACTIVE > AA > AA
+
+Timeline:
+    0.00s  AA            dmg=  414.4  heal= 112.8  BotRK(122), vital(146.4)
+    0.12s  Q             dmg=  399.1  heal= 111.2  AA-reset, BotRK(97), vital(146.4)
+    0.37s  AA            dmg=  364.6  heal= 107.6  BotRK(73), vital(146.4)
+    0.49s  W             dmg=  253.5  heal=  84.7  vital(146.4)
+    1.26s  AA            dmg=  180.3  heal=  18.9  BotRK(35)
+    1.38s  E_ACTIVATE    dmg=    0.0  heal=   0.0  instant, AA-reset
+    1.38s  E_FIRST       dmg=  169.3  heal=  31.3  E-first, BotRK(24)
+    1.95s  E_CRIT        dmg=  340.5  heal=  63.0  E-crit, BotRK(13)
+    2.52s  AA            dmg=  163.6  heal=  30.2  BotRK(0)
+    2.64s  HYDRA_ACTIVE  dmg=  116.4  heal=   0.0  AA-reset, dmg(116)
+    2.64s  AA            dmg=  163.6  heal=  30.2  BotRK(0)
+    3.53s  AA            dmg=  331.2  heal= 128.4  BotRK(0), vital(167.6)
+
+======================================================================
+#3 DETAIL
+======================================================================
+Profane Hydra + Wit's End — Conqueror
+Total: 2823.27 dmg | 705.82 DPS | 573.99 heal
+Sequence: AA > HYDRA_ACTIVE > AA > W > AA > AA > E_ACTIVATE > E_FIRST > E_CRIT > AA > Q > AA
+
+Timeline:
+    0.00s  AA            dmg=  324.1  heal=  89.2  on-hit-M(32), vital(146.4)
+    0.11s  HYDRA_ACTIVE  dmg=  116.4  heal=   0.0  AA-reset, dmg(116)
+    0.11s  AA            dmg=  324.1  heal=  89.2  on-hit-M(32), vital(146.4)
+    0.22s  W             dmg=  253.5  heal=  84.7  vital(146.4)
+    0.97s  AA            dmg=  324.1  heal=  89.2  on-hit-M(32), vital(146.4)
+    1.78s  AA            dmg=  177.7  heal=   4.4  on-hit-M(32)
+    1.90s  E_ACTIVATE    dmg=    0.0  heal=   0.0  instant, AA-reset
+    1.90s  E_FIRST       dmg=  177.7  heal=  18.6  E-first, on-hit-M(32)
+    2.44s  E_CRIT        dmg=  359.2  heal=  37.7  E-crit, on-hit-M(32)
+    2.98s  AA            dmg=  195.7  heal=  20.6  on-hit-M(32)
+    3.34s  Q             dmg=  375.2  heal= 119.9  AA-reset, on-hit-M(32), vital(167.6)
+    3.59s  AA            dmg=  195.7  heal=  20.6  on-hit-M(32)
+
+======================================================================
+#4 DETAIL
+======================================================================
+Voltaic Cyclosword + Profane Hydra — Conqueror
+Total: 2771.46 dmg | 692.87 DPS | 559.13 heal
+Sequence: AA > HYDRA_ACTIVE > AA > Q > AA > AA > W > AA > E_ACTIVATE > E_FIRST > E_CRIT > AA
+
+Timeline:
+    0.00s  AA            dmg=  382.1  heal=  90.3  Energized(68), vital(158.4)
+    0.13s  HYDRA_ACTIVE  dmg=  124.6  heal=   0.0  AA-reset, dmg(125)
+    0.13s  AA            dmg=  314.1  heal=  88.6  vital(158.4)
+    0.26s  Q             dmg=  325.3  heal=  88.9  AA-reset, vital(158.4)
+    0.51s  AA            dmg=  314.1  heal=  88.6  vital(158.4)
+    1.45s  AA            dmg=  155.7  heal=   3.9  
+    1.58s  W             dmg=  107.1  heal=   8.6  
+    2.40s  AA            dmg=  173.8  heal=  18.2  
+    2.53s  E_ACTIVATE    dmg=    0.0  heal=   0.0  instant, AA-reset
+    2.53s  E_FIRST       dmg=  173.8  heal=  18.2  E-first
+    3.12s  E_CRIT        dmg=  527.1  heal= 135.6  E-crit, vital(179.6)
+    3.71s  AA            dmg=  173.8  heal=  18.2  
+
+======================================================================
+#5 DETAIL
+======================================================================
+Trinity Force + Profane Hydra — Conqueror
+Total: 2765.11 dmg | 691.28 DPS | 569.78 heal
+Sequence: AA > HYDRA_ACTIVE > AA > W > AA > AA > E_ACTIVATE > E_FIRST > E_CRIT > AA > Q > AA
+
+Timeline:
+    0.00s  AA            dmg=  284.5  heal=  88.3  vital(142.4)
+    0.12s  HYDRA_ACTIVE  dmg=  113.7  heal=   0.0  AA-reset, dmg(114)
+    0.12s  AA            dmg=  284.5  heal=  88.3  vital(142.4)
+    0.23s  W             dmg=  249.5  heal=  84.7  vital(142.4)
+    0.98s  AA            dmg=  428.6  heal=  91.9  Spellblade(144), vital(142.4)
+    1.83s  AA            dmg=  142.1  heal=   3.5  
+    1.94s  E_ACTIVATE    dmg=    0.0  heal=   0.0  instant, AA-reset
+    1.94s  E_FIRST       dmg=  142.1  heal=  14.9  E-first
+    2.50s  E_CRIT        dmg=  320.3  heal=  33.6  E-crit
+    3.05s  AA            dmg=  160.2  heal=  16.8  
+    3.17s  Q             dmg=  479.4  heal= 131.0  AA-reset, Spellblade(144), vital(163.6)
+    3.42s  AA            dmg=  160.2  heal=  16.8  
+
+======================================================================
+#6 DETAIL
+======================================================================
+Kraken Slayer + Ravenous Hydra — Conqueror
+Total: 2759.03 dmg | 689.76 DPS | 745.9 heal
+Sequence: AA > HYDRA_ACTIVE > AA > Q > AA > AA > W > AA > E_ACTIVATE > E_FIRST > E_CRIT > AA
+
+Timeline:
+    0.00s  AA            dmg=  283.1  heal= 101.3  vital(150.4)
+    0.12s  HYDRA_ACTIVE  dmg=  106.1  heal=   0.0  AA-reset, dmg(106)
+    0.12s  AA            dmg=  283.1  heal= 101.3  vital(150.4)
+    0.24s  Q             dmg=  411.1  heal= 117.3  AA-reset, Kraken(119), vital(150.4)
+    0.49s  AA            dmg=  283.1  heal= 101.3  vital(150.4)
+    1.38s  AA            dmg=  132.7  heal=  16.6  
+    1.50s  W             dmg=  107.1  heal=   8.6  
+    2.27s  AA            dmg=  267.5  heal=  54.8  Kraken(119)
+    2.39s  E_ACTIVATE    dmg=    0.0  heal=   0.0  instant, AA-reset
+    2.39s  E_FIRST       dmg=  148.7  heal=  30.5  E-first
+    2.96s  E_CRIT        dmg=  469.1  heal= 159.4  E-crit, vital(171.6)
+    3.53s  AA            dmg=  267.5  heal=  54.8  Kraken(119)
+
+======================================================================
+#7 DETAIL
+======================================================================
+Blade of the Ruined King + Ravenous Hydra — Conqueror
+Total: 2744.31 dmg | 686.08 DPS | 866.6 heal
+Sequence: AA > Q > AA > HYDRA_ACTIVE > AA > AA > W > AA > E_ACTIVATE > E_FIRST > E_CRIT > AA
+
+Timeline:
+    0.00s  AA            dmg=  392.2  heal= 134.3  BotRK(109), vital(150.4)
+    0.12s  Q             dmg=  380.1  heal= 131.8  AA-reset, BotRK(88), vital(150.4)
+    0.37s  AA            dmg=  350.0  heal= 125.6  BotRK(67), vital(150.4)
+    0.49s  HYDRA_ACTIVE  dmg=  106.1  heal=   0.0  AA-reset, dmg(106)
+    0.49s  AA            dmg=  325.2  heal= 120.5  BotRK(42), vital(150.4)
+    1.38s  AA            dmg=  157.0  heal=  32.2  BotRK(24)
+    1.50s  W             dmg=  107.1  heal=   8.6  
+    2.27s  AA            dmg=  158.7  heal=  45.2  BotRK(10)
+    2.39s  E_ACTIVATE    dmg=    0.0  heal=   0.0  instant, AA-reset
+    2.39s  E_FIRST       dmg=  150.0  heal=  42.8  E-first, BotRK(1)
+    2.96s  E_CRIT        dmg=  469.1  heal= 183.2  E-crit, BotRK(0), vital(171.6)
+    3.53s  AA            dmg=  148.7  heal=  42.4  BotRK(0)
+
+======================================================================
+#8 DETAIL
+======================================================================
+Blade of the Ruined King + Kraken Slayer — Conqueror
+Total: 2730.29 dmg | 682.57 DPS | 726.27 heal
+Sequence: AA > W > AA > Q > AA > AA > AA > E_ACTIVATE > E_FIRST > E_CRIT > AA
+
+Timeline:
+    0.00s  AA            dmg=  357.0  heal= 108.5  BotRK(109), vital(130.4)
+    0.11s  W             dmg=  237.5  heal=  84.7  vital(130.4)
+    0.86s  AA            dmg=  324.6  heal= 105.1  BotRK(77), vital(130.4)
+    0.96s  Q             dmg=  433.4  heal= 116.5  AA-reset, BotRK(59), Kraken(119), vital(130.4)
+    1.21s  AA            dmg=  152.8  heal=  16.1  BotRK(35)
+    1.98s  AA            dmg=  144.5  heal=  26.7  BotRK(27)
+    2.75s  AA            dmg=  271.4  heal=  50.2  BotRK(19), Kraken(119)
+    2.85s  E_ACTIVATE    dmg=    0.0  heal=   0.0  instant, AA-reset
+    2.85s  E_FIRST       dmg=  137.9  heal=  25.5  E-first, BotRK(4)
+    3.46s  E_CRIT        dmg=  418.8  heal= 146.3  E-crit, BotRK(0), vital(151.6)
+    3.98s  AA            dmg=  252.3  heal=  46.7  BotRK(0), Kraken(119)
+
+======================================================================
+#9 DETAIL
+======================================================================
+Kraken Slayer + Titanic Hydra — Conqueror
+Total: 2717.24 dmg | 679.31 DPS | 574.06 heal
+Sequence: AA > HYDRA_ACTIVE > AA > Q > AA > W > AA > AA > E_ACTIVATE > E_FIRST > E_CRIT > AA
+
+Timeline:
+    0.00s  AA            dmg=  279.5  heal=  88.2  on-hit-P(18), vital(138.4)
+    0.12s  HYDRA_ACTIVE  dmg=   58.1  heal=   0.0  AA-reset, dmg(58)
+    0.12s  AA            dmg=  279.5  heal=  88.2  on-hit-P(18), vital(138.4)
+    0.24s  Q             dmg=  406.7  heal=  91.4  AA-reset, on-hit-P(18), Kraken(119), vital(138.4)
+    0.49s  AA            dmg=  279.5  heal=  88.2  on-hit-P(18), vital(138.4)
+    0.62s  W             dmg=  107.1  heal=   0.0  
+    1.38s  AA            dmg=  141.1  heal=  14.8  on-hit-P(18)
+    2.27s  AA            dmg=  275.9  heal=  29.0  on-hit-P(18), Kraken(119)
+    2.39s  E_ACTIVATE    dmg=    0.0  heal=   0.0  instant, AA-reset
+    2.39s  E_FIRST       dmg=  157.2  heal=  16.5  E-first, on-hit-P(18)
+    2.96s  E_CRIT        dmg=  456.5  heal= 128.7  E-crit, on-hit-P(18), vital(159.6)
+    3.53s  AA            dmg=  275.9  heal=  29.0  on-hit-P(18), Kraken(119)
+
+======================================================================
+#10 DETAIL
+======================================================================
+Blade of the Ruined King + Titanic Hydra — Conqueror
+Total: 2714.16 dmg | 678.54 DPS | 700.39 heal
+Sequence: AA > Q > AA > HYDRA_ACTIVE > AA > AA > W > AA > E_ACTIVATE > E_FIRST > E_CRIT > AA
+
+Timeline:
+    0.00s  AA            dmg=  388.6  heal= 111.0  BotRK(109), on-hit-P(18), vital(138.4)
+    0.12s  Q             dmg=  375.9  heal= 109.6  AA-reset, BotRK(88), on-hit-P(18), vital(138.4)
+    0.37s  AA            dmg=  346.9  heal= 106.6  BotRK(67), on-hit-P(18), vital(138.4)
+    0.49s  HYDRA_ACTIVE  dmg=   58.1  heal=   0.0  AA-reset, dmg(58)
+    0.49s  AA            dmg=  324.8  heal= 104.3  BotRK(45), on-hit-P(18), vital(138.4)
+    1.38s  AA            dmg=  168.7  heal=  17.7  BotRK(28), on-hit-P(18)
+    1.50s  W             dmg=  107.1  heal=   8.6  
+    2.27s  AA            dmg=  169.7  heal=  31.4  BotRK(13), on-hit-P(18)
+    2.39s  E_ACTIVATE    dmg=    0.0  heal=   0.0  instant, AA-reset
+    2.39s  E_FIRST       dmg=  160.5  heal=  29.7  E-first, BotRK(3), on-hit-P(18)
+    2.96s  E_CRIT        dmg=  456.5  heal= 152.4  E-crit, BotRK(0), on-hit-P(18), vital(159.6)
+    3.53s  AA            dmg=  157.2  heal=  29.1  BotRK(0), on-hit-P(18)

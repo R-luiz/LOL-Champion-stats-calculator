@@ -1,0 +1,285 @@
+======================================================================
+BUILD OPTIMIZER LOG: 2026-02-13 20:17:12
+======================================================================
+
+Champion: Fiora Level 9
+  AD: 96.2  AP: 0.0  HP: 1367.3  AR: 64.7  MR: 45.8
+  AS: 0.839  Lethality: 0.0  Armor Pen %: 0%  Life Steal: 2%  Omnivamp: 0%
+Target: HP=2000  Armor=65  MR=40
+Time limit: 10.0s
+Rune: PressTheAttack
+
+======================================================================
+RANKINGS
+======================================================================
+  # 1: Wit's End                                             291.8 DPS  ( 2918.2 dmg,  510.4 heal)
+  # 2: Kraken Slayer                                         285.6 DPS  ( 2856.1 dmg,  508.9 heal)
+  # 3: Profane Hydra                                         278.0 DPS  ( 2779.8 dmg,  501.7 heal)
+  # 4: Blade of the Ruined King                              277.3 DPS  ( 2773.4 dmg,  713.6 heal)
+  # 5: Trinity Force                                         272.7 DPS  ( 2726.6 dmg,  569.4 heal)
+  # 6: Ravenous Hydra                                        265.7 DPS  ( 2656.8 dmg,  654.7 heal)
+  # 7: Titanic Hydra                                         260.6 DPS  ( 2605.6 dmg,  500.0 heal)
+  # 8: Voltaic Cyclosword                                    260.4 DPS  ( 2603.9 dmg,  562.9 heal)
+  # 9: Terminus                                              256.0 DPS  ( 2559.8 dmg,  566.0 heal)
+  #10: Stridebreaker                                         243.0 DPS  ( 2430.4 dmg,  495.7 heal)
+
+======================================================================
+#1 DETAIL
+======================================================================
+Wit's End — PressTheAttack
+Total: 2918.24 dmg | 291.82 DPS | 510.43 heal
+Sequence: AA > E_ACTIVATE > E_FIRST > Q > E_CRIT > AA > AA > W > AA > AA > AA > AA > AA > AA > Q > AA > AA > AA
+
+Timeline:
+    0.00s  AA            dmg=  213.1  heal=  68.5  on-hit-M(32), vital(98.4)
+    0.12s  E_ACTIVATE    dmg=    0.0  heal=   0.0  instant, AA-reset
+    0.12s  E_FIRST       dmg=  213.1  heal=  68.5  E-first, on-hit-M(32), vital(98.4)
+    0.21s  Q             dmg=  291.7  heal=  68.9  AA-reset, on-hit-M(32), vital(98.4), PtA-proc(62.5)
+    0.46s  E_CRIT        dmg=  292.6  heal=  70.2  E-crit, on-hit-M(35), vital(106.3)
+    1.12s  AA            dmg=  123.9  heal=   3.1  on-hit-M(35)
+    2.02s  AA            dmg=  123.9  heal=   3.1  on-hit-M(35)
+    2.14s  W             dmg=   84.9  heal=   0.0  
+    2.91s  AA            dmg=  230.2  heal=  68.7  on-hit-M(35), vital(106.3)
+    3.81s  AA            dmg=  123.9  heal=   3.1  on-hit-M(35)
+    4.71s  AA            dmg=  123.9  heal=   3.1  on-hit-M(35)
+    5.60s  AA            dmg=  230.2  heal=  68.7  on-hit-M(35), vital(106.3)
+    6.50s  AA            dmg=  123.9  heal=   3.1  on-hit-M(35)
+    7.40s  AA            dmg=  123.9  heal=   3.1  on-hit-M(35)
+    7.52s  Q             dmg=  141.3  heal=   3.5  AA-reset, on-hit-M(35)
+    7.98s  AA            dmg=  230.2  heal=  68.7  on-hit-M(35), vital(106.3)
+    8.87s  AA            dmg=  123.9  heal=   3.1  on-hit-M(35)
+    9.77s  AA            dmg=  123.9  heal=   3.1  on-hit-M(35)
+
+======================================================================
+#2 DETAIL
+======================================================================
+Kraken Slayer — PressTheAttack
+Total: 2856.07 dmg | 285.61 DPS | 508.85 heal
+Sequence: AA > Q > AA > W > AA > E_ACTIVATE > E_FIRST > E_CRIT > AA > AA > AA > AA > Q > AA > AA > AA > AA
+
+Timeline:
+    0.00s  AA            dmg=  181.0  heal=  67.7  vital(98.4)
+    0.14s  Q             dmg=  197.1  heal=  68.1  AA-reset, vital(98.4)
+    0.39s  AA            dmg=  351.5  heal=  70.3  Kraken(108), vital(98.4), PtA-proc(62.5)
+    0.52s  W             dmg=  191.1  heal=  65.6  vital(106.3)
+    1.38s  AA            dmg=   89.2  heal=   2.2  
+    1.51s  E_ACTIVATE    dmg=    0.0  heal=   0.0  instant, AA-reset
+    1.51s  E_FIRST       dmg=   89.2  heal=   2.2  E-first
+    2.21s  E_CRIT        dmg=  268.3  heal=   6.7  E-crit, Kraken(117)
+    2.92s  AA            dmg=   89.2  heal=   2.2  
+    3.90s  AA            dmg=  195.4  heal=  67.8  vital(106.3)
+    4.89s  AA            dmg=  205.8  heal=   5.2  Kraken(117)
+    5.88s  AA            dmg=   89.2  heal=   2.2  
+    6.14s  Q             dmg=  212.8  heal=  68.2  AA-reset, vital(106.3)
+    6.39s  AA            dmg=  205.8  heal=   5.2  Kraken(117)
+    7.38s  AA            dmg=   89.2  heal=   2.2  
+    8.64s  AA            dmg=  195.4  heal=  67.8  vital(106.3)
+    9.62s  AA            dmg=  205.8  heal=   5.2  Kraken(117)
+
+======================================================================
+#3 DETAIL
+======================================================================
+Profane Hydra — PressTheAttack
+Total: 2779.76 dmg | 277.98 DPS | 501.69 heal
+Sequence: HYDRA_ACTIVE > AA > Q > AA > W > AA > E_ACTIVATE > E_FIRST > E_CRIT > AA > AA > AA > AA > AA > Q > AA > AA
+
+Timeline:
+    0.00s  HYDRA_ACTIVE  dmg=   85.0  heal=   0.0  AA-reset, dmg(85)
+    0.00s  AA            dmg=  220.7  heal=  68.2  vital(114.4)
+    0.16s  Q             dmg=  240.1  heal=  68.7  AA-reset, vital(114.4)
+    0.41s  AA            dmg=  290.8  heal=  68.2  vital(114.4), PtA-proc(70.2)
+    0.58s  W             dmg=  208.4  heal=  65.6  vital(123.5)
+    1.61s  AA            dmg=  114.8  heal=   2.9  
+    1.77s  E_ACTIVATE    dmg=    0.0  heal=   0.0  instant, AA-reset
+    1.77s  E_FIRST       dmg=  114.8  heal=   2.9  E-first
+    2.57s  E_CRIT        dmg=  195.2  heal=   4.9  E-crit
+    3.37s  AA            dmg=  238.3  heal=  68.5  vital(123.5)
+    4.56s  AA            dmg=  114.8  heal=   2.9  
+    5.78s  AA            dmg=  238.3  heal=  68.5  vital(123.5)
+    6.97s  AA            dmg=  114.8  heal=   2.9  
+    8.20s  AA            dmg=  238.3  heal=  68.5  vital(123.5)
+    8.36s  Q             dmg=  135.8  heal=   3.4  AA-reset
+    8.61s  AA            dmg=  114.8  heal=   2.9  
+    9.80s  AA            dmg=  114.8  heal=   2.9  
+
+======================================================================
+#4 DETAIL
+======================================================================
+Blade of the Ruined King — PressTheAttack
+Total: 2773.37 dmg | 277.34 DPS | 713.65 heal
+Sequence: AA > E_ACTIVATE > E_FIRST > Q > E_CRIT > AA > AA > AA > AA > AA > AA > Q > AA > AA > AA > W
+
+Timeline:
+    0.00s  AA            dmg=  290.1  heal=  85.7  BotRK(109), vital(98.4)
+    0.14s  E_ACTIVATE    dmg=    0.0  heal=   0.0  instant, AA-reset
+    0.14s  E_FIRST       dmg=  274.2  heal=  84.0  E-first, BotRK(93), vital(98.4)
+    0.23s  Q             dmg=  337.9  heal=  84.2  AA-reset, BotRK(78), vital(98.4), PtA-proc(62.5)
+    0.48s  E_CRIT        dmg=  322.5  heal=  88.3  E-crit, BotRK(65), vital(106.3)
+    1.19s  AA            dmg=  134.8  heal=  14.2  BotRK(46)
+    2.83s  AA            dmg=  233.2  heal=  78.9  BotRK(38), vital(106.3)
+    3.82s  AA            dmg=  113.2  heal=  11.9  BotRK(24)
+    5.22s  AA            dmg=  212.8  heal=  76.8  BotRK(17), vital(106.3)
+    6.21s  AA            dmg=   94.0  heal=   9.9  BotRK(5)
+    7.19s  AA            dmg=   89.2  heal=   9.4  BotRK(0)
+    7.33s  Q             dmg=  106.6  heal=  11.2  AA-reset, BotRK(0)
+    7.58s  AA            dmg=  195.4  heal=  75.0  BotRK(0), vital(106.3)
+    8.57s  AA            dmg=   89.2  heal=   9.4  BotRK(0)
+    9.56s  AA            dmg=   89.2  heal=   9.4  BotRK(0)
+    9.69s  W             dmg=  191.1  heal=  65.6  vital(106.3)
+
+======================================================================
+#5 DETAIL
+======================================================================
+Trinity Force — PressTheAttack
+Total: 2726.62 dmg | 272.66 DPS | 569.41 heal
+Sequence: AA > Q > AA > E_ACTIVATE > E_FIRST > E_CRIT > AA > AA > AA > AA > W > AA > AA > AA > AA > Q > AA > AA
+
+Timeline:
+    0.00s  AA            dmg=  173.9  heal=  67.6  vital(94.4)
+    0.13s  Q             dmg=  296.7  heal=  70.7  AA-reset, Spellblade(107), vital(94.4)
+    0.38s  AA            dmg=  236.4  heal=  67.6  vital(94.4), PtA-proc(62.5)
+    0.51s  E_ACTIVATE    dmg=    0.0  heal=   0.0  instant, AA-reset
+    0.51s  E_FIRST       dmg=  187.8  heal=  67.7  E-first, vital(102.0)
+    1.18s  E_CRIT        dmg=  146.0  heal=   3.6  E-crit
+    1.86s  AA            dmg=   85.9  heal=   2.1  
+    2.85s  AA            dmg=  187.8  heal=  67.7  vital(102.0)
+    3.79s  AA            dmg=   85.9  heal=   2.1  
+    4.73s  AA            dmg=   85.9  heal=   2.1  
+    4.86s  W             dmg=  186.8  heal=  65.6  vital(102.0)
+    5.66s  AA            dmg=  201.4  heal=   5.0  Spellblade(116)
+    6.60s  AA            dmg=   85.9  heal=   2.1  
+    7.61s  AA            dmg=  187.8  heal=  67.7  vital(102.0)
+    8.54s  AA            dmg=   85.9  heal=   2.1  
+    8.67s  Q             dmg=  218.5  heal=   5.5  AA-reset, Spellblade(116)
+    8.92s  AA            dmg=   85.9  heal=   2.1  
+    9.86s  AA            dmg=  187.8  heal=  67.7  vital(102.0)
+
+======================================================================
+#6 DETAIL
+======================================================================
+Ravenous Hydra — PressTheAttack
+Total: 2656.83 dmg | 265.68 DPS | 654.68 heal
+Sequence: HYDRA_ACTIVE > AA > Q > AA > E_ACTIVATE > E_FIRST > E_CRIT > AA > W > AA > AA > AA > AA > AA > Q > AA > AA
+
+Timeline:
+    0.00s  HYDRA_ACTIVE  dmg=   78.2  heal=   0.0  AA-reset, dmg(78)
+    0.00s  AA            dmg=  216.1  heal=  77.8  vital(118.4)
+    0.16s  Q             dmg=  233.7  heal=  80.0  AA-reset, vital(118.4)
+    0.41s  AA            dmg=  278.6  heal=  77.8  vital(118.4), PtA-proc(62.5)
+    0.58s  E_ACTIVATE    dmg=    0.0  heal=   0.0  instant, AA-reset
+    0.58s  E_FIRST       dmg=  233.4  heal=  78.8  E-first, vital(127.9)
+    1.38s  E_CRIT        dmg=  179.4  heal=  22.4  E-crit
+    2.17s  AA            dmg=  105.5  heal=  13.2  
+    2.34s  W             dmg=   84.9  heal=   0.0  
+    3.37s  AA            dmg=  233.4  heal=  78.8  vital(127.9)
+    4.56s  AA            dmg=  105.5  heal=  13.2  
+    5.78s  AA            dmg=  233.4  heal=  78.8  vital(127.9)
+    6.97s  AA            dmg=  105.5  heal=  13.2  
+    8.20s  AA            dmg=  233.4  heal=  78.8  vital(127.9)
+    8.36s  Q             dmg=  124.6  heal=  15.6  AA-reset
+    8.61s  AA            dmg=  105.5  heal=  13.2  
+    9.80s  AA            dmg=  105.5  heal=  13.2  
+
+======================================================================
+#7 DETAIL
+======================================================================
+Titanic Hydra — PressTheAttack
+Total: 2605.57 dmg | 260.56 DPS | 499.97 heal
+Sequence: HYDRA_ACTIVE > AA > Q > AA > E_ACTIVATE > E_FIRST > E_CRIT > AA > W > AA > AA > AA > AA > AA > Q > AA > AA
+
+Timeline:
+    0.00s  HYDRA_ACTIVE  dmg=   45.3  heal=   0.0  AA-reset, dmg(45)
+    0.00s  AA            dmg=  209.4  heal=  68.2  on-hit-P(14), vital(106.4)
+    0.16s  Q             dmg=  226.1  heal=  68.6  AA-reset, on-hit-P(14), vital(106.4)
+    0.41s  AA            dmg=  271.9  heal=  68.2  on-hit-P(14), vital(106.4), PtA-proc(62.5)
+    0.58s  E_ACTIVATE    dmg=    0.0  heal=   0.0  instant, AA-reset
+    0.58s  E_FIRST       dmg=  226.1  heal=  68.4  E-first, on-hit-P(16), vital(114.9)
+    1.38s  E_CRIT        dmg=  178.2  heal=   4.5  E-crit, on-hit-P(16)
+    2.17s  AA            dmg=  111.2  heal=   2.8  on-hit-P(16)
+    2.34s  W             dmg=   84.9  heal=   0.0  
+    3.37s  AA            dmg=  226.1  heal=  68.4  on-hit-P(16), vital(114.9)
+    4.56s  AA            dmg=  111.2  heal=   2.8  on-hit-P(16)
+    5.78s  AA            dmg=  226.1  heal=  68.4  on-hit-P(16), vital(114.9)
+    6.97s  AA            dmg=  111.2  heal=   2.8  on-hit-P(16)
+    8.20s  AA            dmg=  226.1  heal=  68.4  on-hit-P(16), vital(114.9)
+    8.36s  Q             dmg=  129.3  heal=   3.2  AA-reset, on-hit-P(16)
+    8.61s  AA            dmg=  111.2  heal=   2.8  on-hit-P(16)
+    9.80s  AA            dmg=  111.2  heal=   2.8  on-hit-P(16)
+
+======================================================================
+#8 DETAIL
+======================================================================
+Voltaic Cyclosword — PressTheAttack
+Total: 2603.87 dmg | 260.39 DPS | 562.91 heal
+Sequence: AA > Q > AA > E_ACTIVATE > E_FIRST > W > E_CRIT > AA > AA > AA > AA > AA > Q > AA > AA > AA
+
+Timeline:
+    0.00s  AA            dmg=  262.7  heal=  69.4  Energized(61), vital(110.4)
+    0.15s  Q             dmg=  219.1  heal=  68.3  AA-reset, vital(110.4)
+    0.40s  AA            dmg=  264.6  heal=  67.9  vital(110.4), PtA-proc(62.5)
+    0.54s  E_ACTIVATE    dmg=    0.0  heal=   0.0  instant, AA-reset
+    0.54s  E_FIRST       dmg=  218.2  heal=  68.1  E-first, vital(119.2)
+    1.28s  W             dmg=   84.9  heal=   0.0  
+    2.03s  E_CRIT        dmg=  168.3  heal=   4.2  E-crit
+    2.77s  AA            dmg=  218.2  heal=  68.1  vital(119.2)
+    3.83s  AA            dmg=   99.0  heal=   2.5  
+    5.16s  AA            dmg=  218.2  heal=  68.1  vital(119.2)
+    6.22s  AA            dmg=   99.0  heal=   2.5  
+    7.29s  AA            dmg=   99.0  heal=   2.5  
+    7.43s  Q             dmg=  236.6  heal=  68.5  AA-reset, vital(119.2)
+    7.68s  AA            dmg=   99.0  heal=   2.5  
+    8.74s  AA            dmg=   99.0  heal=   2.5  
+    9.80s  AA            dmg=  218.2  heal=  68.1  vital(119.2)
+
+======================================================================
+#9 DETAIL
+======================================================================
+Terminus — PressTheAttack
+Total: 2559.84 dmg | 255.98 DPS | 566.01 heal
+Sequence: AA > Q > AA > E_ACTIVATE > E_FIRST > E_CRIT > AA > AA > AA > AA > AA > AA > Q > AA > AA > AA > W
+
+Timeline:
+    0.00s  AA            dmg=  188.3  heal=  68.0  on-hit-M(21), vital(90.4)
+    0.13s  Q             dmg=  203.8  heal=  68.4  AA-reset, on-hit-M(21), vital(90.4)
+    0.38s  AA            dmg=  250.8  heal=  68.0  on-hit-M(21), vital(90.4), PtA-proc(62.5)
+    0.51s  E_ACTIVATE    dmg=    0.0  heal=   0.0  instant, AA-reset
+    0.51s  E_FIRST       dmg=  203.4  heal=  68.2  E-first, on-hit-M(23), vital(97.6)
+    1.20s  E_CRIT        dmg=  163.6  heal=   4.1  E-crit, on-hit-M(23)
+    1.88s  AA            dmg=  105.8  heal=   2.6  on-hit-M(23)
+    2.86s  AA            dmg=  203.4  heal=  68.2  on-hit-M(23), vital(97.6)
+    3.81s  AA            dmg=  105.8  heal=   2.6  on-hit-M(23)
+    5.24s  AA            dmg=  203.4  heal=  68.2  on-hit-M(23), vital(97.6)
+    6.20s  AA            dmg=  105.8  heal=   2.6  on-hit-M(23)
+    7.15s  AA            dmg=  105.8  heal=   2.6  on-hit-M(23)
+    7.28s  Q             dmg=  122.5  heal=   3.1  AA-reset, on-hit-M(23)
+    7.53s  AA            dmg=  203.4  heal=  68.2  on-hit-M(23), vital(97.6)
+    8.49s  AA            dmg=  105.8  heal=   2.6  on-hit-M(23)
+    9.45s  AA            dmg=  105.8  heal=   2.6  on-hit-M(23)
+    9.58s  W             dmg=  182.5  heal=  65.6  vital(97.6)
+
+======================================================================
+#10 DETAIL
+======================================================================
+Stridebreaker — PressTheAttack
+Total: 2430.42 dmg | 243.04 DPS | 495.74 heal
+Sequence: STRIDEBREAKER > AA > E_ACTIVATE > E_FIRST > Q > E_CRIT > AA > AA > W > AA > AA > AA > AA > Q > AA > AA > AA > AA
+
+Timeline:
+    0.00s  STRIDEBREAKER  dmg=   68.5  heal=   0.0  dmg(68)
+    0.00s  AA            dmg=  188.0  heal=  67.7  vital(102.4)
+    0.14s  E_ACTIVATE    dmg=    0.0  heal=   0.0  instant, AA-reset
+    0.14s  E_FIRST       dmg=  188.0  heal=  67.7  E-first, vital(102.4)
+    0.24s  Q             dmg=  266.9  heal=  68.1  AA-reset, vital(102.4), PtA-proc(62.5)
+    0.49s  E_CRIT        dmg=  267.8  heal=  69.5  E-crit, vital(110.6)
+    1.21s  AA            dmg=   92.5  heal=   2.3  
+    2.23s  AA            dmg=   92.5  heal=   2.3  
+    2.37s  W             dmg=  195.4  heal=  65.6  vital(110.6)
+    3.26s  AA            dmg=   92.5  heal=   2.3  
+    4.28s  AA            dmg=   92.5  heal=   2.3  
+    5.30s  AA            dmg=  203.0  heal=  67.9  vital(110.6)
+    6.33s  AA            dmg=   92.5  heal=   2.3  
+    6.47s  Q             dmg=  110.2  heal=   2.8  AA-reset
+    6.72s  AA            dmg=   92.5  heal=   2.3  
+    7.74s  AA            dmg=  203.0  heal=  67.9  vital(110.6)
+    8.77s  AA            dmg=   92.5  heal=   2.3  
+    9.79s  AA            dmg=   92.5  heal=   2.3  

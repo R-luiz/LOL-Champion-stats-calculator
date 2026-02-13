@@ -1,0 +1,331 @@
+======================================================================
+BUILD OPTIMIZER LOG: 2026-02-13 20:33:56
+======================================================================
+
+Champion: Fiora Level 14
+  AD: 113.9  AP: 0.0  HP: 1896.9  AR: 89.8  MR: 56.8
+  AS: 0.957  Lethality: 0.0  Armor Pen %: 0%  Life Steal: 2%  Omnivamp: 0%
+Target: HP=3500  Armor=200  MR=80
+Time limit: 10.0s
+Rune: PressTheAttack
+
+======================================================================
+RANKINGS
+======================================================================
+  # 1: Blade of the Ruined King + Wit's End                  436.0 DPS  ( 4360.3 dmg,  861.0 heal)
+  # 2: Blade of the Ruined King + Profane Hydra              427.4 DPS  ( 4274.1 dmg,  826.6 heal)
+  # 3: Blade of the Ruined King + Kraken Slayer              421.9 DPS  ( 4218.6 dmg,  846.1 heal)
+  # 4: Profane Hydra + Wit's End                             418.8 DPS  ( 4187.8 dmg,  645.7 heal)
+  # 5: Kraken Slayer + Wit's End                             418.7 DPS  ( 4186.9 dmg,  652.4 heal)
+  # 6: Blade of the Ruined King + Lord Dominik's Regards     418.1 DPS  ( 4181.0 dmg,  848.8 heal)
+  # 7: Ravenous Hydra + Wit's End                            417.2 DPS  ( 4171.8 dmg,  849.2 heal)
+  # 8: Blade of the Ruined King + Titanic Hydra              416.2 DPS  ( 4162.4 dmg,  828.8 heal)
+  # 9: Blade of the Ruined King + Ravenous Hydra             414.7 DPS  ( 4147.0 dmg, 1013.7 heal)
+  #10: Kraken Slayer + Profane Hydra                         411.9 DPS  ( 4119.5 dmg,  644.7 heal)
+
+======================================================================
+#1 DETAIL
+======================================================================
+Blade of the Ruined King + Wit's End — PressTheAttack
+Total: 4360.31 dmg | 436.03 DPS | 860.95 heal
+Sequence: E_ACTIVATE > E_FIRST > Q > E_CRIT > W > AA > AA > AA > AA > AA > AA > AA > AA > AA > AA > Q > AA > E_ACTIVATE > E_FIRST > E_CRIT > AA > AA
+
+Timeline:
+    0.00s  E_ACTIVATE    dmg=    0.0  heal=   0.0  instant, AA-reset
+    0.00s  E_FIRST       dmg=  422.8  heal= 105.2  E-first, BotRK(105), on-hit-M(25), vital(228.2)
+    0.07s  Q             dmg=  414.4  heal= 104.3  AA-reset, BotRK(92), on-hit-M(25), vital(228.2)
+    0.32s  E_CRIT        dmg=  509.9  heal= 109.3  E-crit, BotRK(80), on-hit-M(25), vital(228.2), PtA-proc(47.5)
+    0.39s  W             dmg=  336.5  heal=  84.7  vital(246.5)
+    1.14s  AA            dmg=  155.7  heal=  16.3  BotRK(59), on-hit-M(27)
+    1.85s  AA            dmg=  150.6  heal=  15.8  BotRK(54), on-hit-M(27)
+    2.56s  AA            dmg=  145.7  heal=  15.3  BotRK(49), on-hit-M(27)
+    3.27s  AA            dmg=  387.5  heal=  99.5  BotRK(44), on-hit-M(27), vital(246.5)
+    3.98s  AA            dmg=  128.4  heal=  13.5  BotRK(32), on-hit-M(27)
+    4.69s  AA            dmg=  124.3  heal=  13.1  BotRK(27), on-hit-M(27)
+    5.62s  AA            dmg=  366.7  heal=  97.3  BotRK(23), on-hit-M(27), vital(246.5)
+    6.33s  AA            dmg=  108.4  heal=  11.4  BotRK(12), on-hit-M(27)
+    7.04s  AA            dmg=  104.9  heal=  11.0  BotRK(8), on-hit-M(27)
+    7.75s  AA            dmg=  101.5  heal=  10.7  BotRK(5), on-hit-M(27)
+    7.85s  Q             dmg=  349.3  heal=  95.5  AA-reset, BotRK(1), on-hit-M(27), vital(246.5)
+    8.10s  AA            dmg=   96.8  heal=  10.2  BotRK(0), on-hit-M(27)
+    8.20s  E_ACTIVATE    dmg=    0.0  heal=   0.0  instant, AA-reset
+    8.20s  E_FIRST       dmg=   96.8  heal=  10.2  E-first, BotRK(0), on-hit-M(27)
+    8.69s  E_CRIT        dmg=  166.6  heal=  17.5  E-crit, BotRK(0), on-hit-M(27)
+    9.19s  AA            dmg=   96.8  heal=  10.2  BotRK(0), on-hit-M(27)
+    9.90s  AA            dmg=   96.8  heal=  10.2  BotRK(0), on-hit-M(27)
+
+======================================================================
+#2 DETAIL
+======================================================================
+Blade of the Ruined King + Profane Hydra — PressTheAttack
+Total: 4274.15 dmg | 427.41 DPS | 826.56 heal
+Sequence: HYDRA_ACTIVE > AA > E_ACTIVATE > E_FIRST > W > E_CRIT > AA > AA > Q > AA > AA > AA > AA > AA > AA > E_ACTIVATE > E_FIRST > E_CRIT > AA > Q > AA > AA
+
+Timeline:
+    0.00s  HYDRA_ACTIVE  dmg=   60.7  heal=   0.0  AA-reset, dmg(61)
+    0.00s  AA            dmg=  441.8  heal= 104.2  BotRK(110), vital(256.2)
+    0.12s  E_ACTIVATE    dmg=    0.0  heal=   0.0  instant, AA-reset
+    0.12s  E_FIRST       dmg=  427.7  heal= 102.7  E-first, BotRK(96), vital(256.2)
+    0.20s  W             dmg=  339.5  heal=  84.7  vital(256.2)
+    0.95s  E_CRIT        dmg=  529.6  heal= 108.1  E-crit, BotRK(71), vital(256.2), PtA-proc(50.5)
+    1.52s  AA            dmg=  140.5  heal=  14.8  BotRK(59)
+    2.41s  AA            dmg=  135.7  heal=  14.2  BotRK(54)
+    2.53s  Q             dmg=  136.7  heal=  14.4  AA-reset, BotRK(49)
+    2.78s  AA            dmg=  126.3  heal=  13.3  BotRK(44)
+    3.67s  AA            dmg=  398.6  heal=  97.5  BotRK(40), vital(276.7)
+    4.55s  AA            dmg=  108.2  heal=  11.4  BotRK(26)
+    5.44s  AA            dmg=  104.5  heal=  11.0  BotRK(23)
+    6.32s  AA            dmg=  377.6  heal=  95.3  BotRK(19), vital(276.7)
+    7.21s  AA            dmg=   87.9  heal=   9.2  BotRK(6)
+    7.33s  E_ACTIVATE    dmg=    0.0  heal=   0.0  instant, AA-reset
+    7.33s  E_FIRST       dmg=   84.8  heal=   8.9  E-first, BotRK(3)
+    7.90s  E_CRIT        dmg=  163.8  heal=  17.2  E-crit, BotRK(0)
+    8.69s  AA            dmg=  358.6  heal=  93.3  BotRK(0), vital(276.7)
+    8.81s  Q             dmg=   87.6  heal=   9.2  AA-reset, BotRK(0)
+    9.06s  AA            dmg=   81.9  heal=   8.6  BotRK(0)
+    9.95s  AA            dmg=   81.9  heal=   8.6  BotRK(0)
+
+======================================================================
+#3 DETAIL
+======================================================================
+Blade of the Ruined King + Kraken Slayer — PressTheAttack
+Total: 4218.64 dmg | 421.86 DPS | 846.08 heal
+Sequence: E_ACTIVATE > E_FIRST > Q > E_CRIT > W > AA > AA > AA > AA > AA > AA > AA > AA > AA > E_ACTIVATE > E_FIRST > Q > E_CRIT > AA > AA > AA
+
+Timeline:
+    0.00s  E_ACTIVATE    dmg=    0.0  heal=   0.0  instant, AA-reset
+    0.00s  E_FIRST       dmg=  397.8  heal= 102.5  E-first, BotRK(105), vital(228.2)
+    0.07s  Q             dmg=  390.2  heal= 101.7  AA-reset, BotRK(93), vital(228.2)
+    0.32s  E_CRIT        dmg=  551.6  heal= 113.7  E-crit, BotRK(81), Kraken(65), vital(228.2), PtA-proc(47.5)
+    0.39s  W             dmg=  336.5  heal=  84.7  vital(246.5)
+    1.14s  AA            dmg=  128.9  heal=  13.5  BotRK(59)
+    1.91s  AA            dmg=  124.7  heal=  13.1  BotRK(55)
+    2.68s  AA            dmg=  191.2  heal=  20.1  BotRK(51), Kraken(71)
+    3.45s  AA            dmg=  360.9  heal=  96.7  BotRK(45), vital(246.5)
+    4.22s  AA            dmg=  102.8  heal=  10.8  BotRK(33)
+    4.98s  AA            dmg=  170.0  heal=  17.9  BotRK(30), Kraken(71)
+    5.80s  AA            dmg=  340.4  heal=  94.6  BotRK(24), vital(246.5)
+    6.57s  AA            dmg=   82.9  heal=   8.7  BotRK(13)
+    7.34s  AA            dmg=  150.7  heal=  15.8  BotRK(10), Kraken(71)
+    7.45s  E_ACTIVATE    dmg=    0.0  heal=   0.0  instant, AA-reset
+    7.45s  E_FIRST       dmg=   75.3  heal=   7.9  E-first, BotRK(6)
+    7.52s  Q             dmg=   77.5  heal=   8.1  AA-reset, BotRK(3)
+    7.77s  E_CRIT        dmg=  210.7  heal=  22.1  E-crit, BotRK(1), Kraken(71)
+    8.29s  AA            dmg=  316.3  heal=  92.0  BotRK(0), vital(246.5)
+    9.06s  AA            dmg=   69.8  heal=   7.3  BotRK(0)
+    9.82s  AA            dmg=  140.3  heal=  14.7  BotRK(0), Kraken(71)
+
+======================================================================
+#4 DETAIL
+======================================================================
+Profane Hydra + Wit's End — PressTheAttack
+Total: 4187.8 dmg | 418.78 DPS | 645.71 heal
+Sequence: HYDRA_ACTIVE > Q > AA > E_ACTIVATE > E_FIRST > W > E_CRIT > AA > AA > AA > AA > AA > AA > AA > AA > Q > AA > E_ACTIVATE > E_FIRST > E_CRIT > AA > AA
+
+Timeline:
+    0.00s  HYDRA_ACTIVE  dmg=   60.7  heal=   0.0  AA-reset, dmg(61)
+    0.00s  Q             dmg=  362.3  heal=  87.4  AA-reset, on-hit-M(25), vital(256.2)
+    0.25s  AA            dmg=  357.1  heal=  87.2  on-hit-M(25), vital(256.2)
+    0.36s  E_ACTIVATE    dmg=    0.0  heal=   0.0  instant, AA-reset
+    0.36s  E_FIRST       dmg=  407.6  heal=  87.2  E-first, on-hit-M(25), vital(256.2), PtA-proc(50.5)
+    0.44s  W             dmg=  366.7  heal=  84.7  vital(276.7)
+    1.19s  E_CRIT        dmg=  190.8  heal=   4.8  E-crit, on-hit-M(27)
+    1.73s  AA            dmg=  108.9  heal=   2.7  on-hit-M(27)
+    2.54s  AA            dmg=  108.9  heal=   2.7  on-hit-M(27)
+    3.35s  AA            dmg=  385.6  heal=  87.4  on-hit-M(27), vital(276.7)
+    4.16s  AA            dmg=  108.9  heal=   2.7  on-hit-M(27)
+    4.97s  AA            dmg=  108.9  heal=   2.7  on-hit-M(27)
+    5.78s  AA            dmg=  385.6  heal=  87.4  on-hit-M(27), vital(276.7)
+    6.59s  AA            dmg=  108.9  heal=   2.7  on-hit-M(27)
+    7.40s  AA            dmg=  108.9  heal=   2.7  on-hit-M(27)
+    7.51s  Q             dmg=  114.6  heal=   2.9  AA-reset, on-hit-M(27)
+    7.76s  AA            dmg=  108.9  heal=   2.7  on-hit-M(27)
+    7.88s  E_ACTIVATE    dmg=    0.0  heal=   0.0  instant, AA-reset
+    7.88s  E_FIRST       dmg=  108.9  heal=   2.7  E-first, on-hit-M(27)
+    8.42s  E_CRIT        dmg=  467.5  heal=  89.5  E-crit, on-hit-M(27), vital(276.7)
+    8.96s  AA            dmg=  108.9  heal=   2.7  on-hit-M(27)
+    9.77s  AA            dmg=  108.9  heal=   2.7  on-hit-M(27)
+
+======================================================================
+#5 DETAIL
+======================================================================
+Kraken Slayer + Wit's End — PressTheAttack
+Total: 4186.88 dmg | 418.69 DPS | 652.44 heal
+Sequence: E_ACTIVATE > E_FIRST > Q > E_CRIT > W > AA > AA > AA > AA > AA > AA > AA > AA > AA > AA > Q > AA > E_ACTIVATE > E_FIRST > E_CRIT > AA > AA
+
+Timeline:
+    0.00s  E_ACTIVATE    dmg=    0.0  heal=   0.0  instant, AA-reset
+    0.00s  E_FIRST       dmg=  317.8  heal=  87.0  E-first, on-hit-M(25), vital(228.2)
+    0.07s  Q             dmg=  322.1  heal=  87.1  AA-reset, on-hit-M(25), vital(228.2)
+    0.32s  E_CRIT        dmg=  495.3  heal=  90.2  E-crit, on-hit-M(25), Kraken(65), vital(228.2), PtA-proc(47.5)
+    0.39s  W             dmg=  336.5  heal=  84.7  vital(246.5)
+    1.14s  AA            dmg=   96.8  heal=   2.4  on-hit-M(27)
+    1.85s  AA            dmg=   96.8  heal=   2.4  on-hit-M(27)
+    2.56s  AA            dmg=  167.3  heal=   4.2  on-hit-M(27), Kraken(71)
+    3.27s  AA            dmg=  343.3  heal=  87.1  on-hit-M(27), vital(246.5)
+    3.98s  AA            dmg=   96.8  heal=   2.4  on-hit-M(27)
+    4.69s  AA            dmg=  167.3  heal=   4.2  on-hit-M(27), Kraken(71)
+    5.62s  AA            dmg=  343.3  heal=  87.1  on-hit-M(27), vital(246.5)
+    6.33s  AA            dmg=   96.8  heal=   2.4  on-hit-M(27)
+    7.04s  AA            dmg=  167.3  heal=   4.2  on-hit-M(27), Kraken(71)
+    7.75s  AA            dmg=   96.8  heal=   2.4  on-hit-M(27)
+    7.85s  Q             dmg=  347.9  heal=  87.2  AA-reset, on-hit-M(27), vital(246.5)
+    8.10s  AA            dmg=  167.3  heal=   4.2  on-hit-M(27), Kraken(71)
+    8.20s  E_ACTIVATE    dmg=    0.0  heal=   0.0  instant, AA-reset
+    8.20s  E_FIRST       dmg=   96.8  heal=   2.4  E-first, on-hit-M(27)
+    8.69s  E_CRIT        dmg=  166.6  heal=   4.2  E-crit, on-hit-M(27)
+    9.19s  AA            dmg=  167.3  heal=   4.2  on-hit-M(27), Kraken(71)
+    9.90s  AA            dmg=   96.8  heal=   2.4  on-hit-M(27)
+
+======================================================================
+#6 DETAIL
+======================================================================
+Blade of the Ruined King + Lord Dominik's Regards — PressTheAttack
+Total: 4181.03 dmg | 418.1 DPS | 848.84 heal
+Sequence: AA > E_ACTIVATE > E_FIRST > W > E_CRIT > AA > AA > Q > AA > AA > AA > AA > AA > AA > E_ACTIVATE > E_FIRST > E_CRIT > AA > Q > AA > AA
+
+Timeline:
+    0.00s  AA            dmg=  431.2  heal= 106.8  BotRK(131), vital(221.2)
+    0.12s  E_ACTIVATE    dmg=    0.0  heal=   0.0  instant, AA-reset
+    0.12s  E_FIRST       dmg=  415.0  heal= 105.1  E-first, BotRK(115), vital(221.2)
+    0.20s  W             dmg=  304.5  heal=  84.7  vital(221.2)
+    0.95s  E_CRIT        dmg=  526.1  heal= 110.5  E-crit, BotRK(88), vital(221.2), PtA-proc(59.4)
+    1.52s  AA            dmg=  158.8  heal=  16.7  BotRK(74)
+    2.41s  AA            dmg=  152.4  heal=  16.0  BotRK(67)
+    2.53s  Q             dmg=  151.8  heal=  15.9  AA-reset, BotRK(61)
+    2.78s  AA            dmg=  140.1  heal=  14.7  BotRK(55)
+    3.67s  AA            dmg=  373.3  heal=  98.8  BotRK(49), vital(238.9)
+    4.55s  AA            dmg=  119.3  heal=  12.5  BotRK(34)
+    5.44s  AA            dmg=  114.5  heal=  12.0  BotRK(29)
+    6.32s  AA            dmg=  348.7  heal=  96.2  BotRK(25), vital(238.9)
+    7.21s  AA            dmg=   95.7  heal=  10.1  BotRK(11)
+    7.33s  E_ACTIVATE    dmg=    0.0  heal=   0.0  instant, AA-reset
+    7.33s  E_FIRST       dmg=   91.8  heal=   9.6  E-first, BotRK(7)
+    7.90s  E_CRIT        dmg=  173.1  heal=  18.2  E-crit, BotRK(3)
+    8.53s  AA            dmg=   85.0  heal=   8.9  BotRK(0)
+    8.69s  Q             dmg=  329.5  heal=  94.2  AA-reset, BotRK(0), vital(238.9)
+    8.94s  AA            dmg=   85.0  heal=   8.9  BotRK(0)
+    9.83s  AA            dmg=   85.0  heal=   8.9  BotRK(0)
+
+======================================================================
+#7 DETAIL
+======================================================================
+Ravenous Hydra + Wit's End — PressTheAttack
+Total: 4171.84 dmg | 417.18 DPS | 849.18 heal
+Sequence: HYDRA_ACTIVE > Q > AA > E_ACTIVATE > E_FIRST > W > E_CRIT > AA > AA > AA > AA > AA > AA > AA > AA > Q > AA > E_ACTIVATE > E_FIRST > E_CRIT > AA > AA
+
+Timeline:
+    0.00s  HYDRA_ACTIVE  dmg=   58.4  heal=   0.0  AA-reset, dmg(58)
+    0.00s  Q             dmg=  366.3  heal=  97.6  AA-reset, on-hit-M(25), vital(263.2)
+    0.25s  AA            dmg=  361.2  heal=  97.0  on-hit-M(25), vital(263.2)
+    0.36s  E_ACTIVATE    dmg=    0.0  heal=   0.0  instant, AA-reset
+    0.36s  E_FIRST       dmg=  408.7  heal=  97.0  E-first, on-hit-M(25), vital(263.2), PtA-proc(47.5)
+    0.44s  W             dmg=  374.3  heal=  84.7  vital(284.3)
+    1.19s  E_CRIT        dmg=  184.6  heal=  23.1  E-crit, on-hit-M(27)
+    1.73s  AA            dmg=  105.8  heal=  13.2  on-hit-M(27)
+    2.54s  AA            dmg=  105.8  heal=  13.2  on-hit-M(27)
+    3.35s  AA            dmg=  390.1  heal=  97.9  on-hit-M(27), vital(284.3)
+    4.16s  AA            dmg=  105.8  heal=  13.2  on-hit-M(27)
+    4.97s  AA            dmg=  105.8  heal=  13.2  on-hit-M(27)
+    5.78s  AA            dmg=  390.1  heal=  97.9  on-hit-M(27), vital(284.3)
+    6.59s  AA            dmg=  105.8  heal=  13.2  on-hit-M(27)
+    7.40s  AA            dmg=  105.8  heal=  13.2  on-hit-M(27)
+    7.51s  Q             dmg=  111.3  heal=  13.9  AA-reset, on-hit-M(27)
+    7.76s  AA            dmg=  105.8  heal=  13.2  on-hit-M(27)
+    7.88s  E_ACTIVATE    dmg=    0.0  heal=   0.0  instant, AA-reset
+    7.88s  E_FIRST       dmg=  105.8  heal=  13.2  E-first, on-hit-M(27)
+    8.42s  E_CRIT        dmg=  468.9  heal= 107.8  E-crit, on-hit-M(27), vital(284.3)
+    8.96s  AA            dmg=  105.8  heal=  13.2  on-hit-M(27)
+    9.77s  AA            dmg=  105.8  heal=  13.2  on-hit-M(27)
+
+======================================================================
+#8 DETAIL
+======================================================================
+Blade of the Ruined King + Titanic Hydra — PressTheAttack
+Total: 4162.39 dmg | 416.24 DPS | 828.79 heal
+Sequence: HYDRA_ACTIVE > AA > E_ACTIVATE > E_FIRST > W > E_CRIT > AA > Q > AA > AA > AA > AA > AA > AA > AA > AA > Q > AA > E_ACTIVATE > E_FIRST > E_CRIT > AA
+
+Timeline:
+    0.00s  HYDRA_ACTIVE  dmg=   32.0  heal=   0.0  AA-reset, dmg(32)
+    0.00s  AA            dmg=  423.9  heal= 103.8  BotRK(104), on-hit-P(10), vital(242.2)
+    0.12s  E_ACTIVATE    dmg=    0.0  heal=   0.0  instant, AA-reset
+    0.12s  E_FIRST       dmg=  411.1  heal= 102.5  E-first, BotRK(91), on-hit-P(10), vital(242.2)
+    0.20s  W             dmg=  325.5  heal=  84.7  vital(242.2)
+    0.95s  E_CRIT        dmg=  504.5  heal= 107.3  E-crit, BotRK(69), on-hit-P(10), vital(242.2), PtA-proc(47.5)
+    1.52s  AA            dmg=  142.2  heal=  14.9  BotRK(58), on-hit-P(10)
+    1.64s  Q             dmg=  142.6  heal=  15.0  AA-reset, BotRK(54), on-hit-P(10)
+    1.89s  AA            dmg=  133.0  heal=  14.0  BotRK(49), on-hit-P(10)
+    2.78s  AA            dmg=  128.7  heal=  13.5  BotRK(45), on-hit-P(10)
+    3.67s  AA            dmg=  386.1  heal=  97.8  BotRK(41), on-hit-P(10), vital(261.6)
+    4.55s  AA            dmg=  112.0  heal=  11.8  BotRK(28), on-hit-P(10)
+    5.44s  AA            dmg=  108.4  heal=  11.4  BotRK(25), on-hit-P(10)
+    6.32s  AA            dmg=  366.5  heal=  95.7  BotRK(21), on-hit-P(10), vital(261.6)
+    7.21s  AA            dmg=   93.0  heal=   9.8  BotRK(9), on-hit-P(10)
+    8.09s  AA            dmg=   90.0  heal=   9.4  BotRK(6), on-hit-P(10)
+    8.21s  Q             dmg=   92.1  heal=   9.7  AA-reset, BotRK(3), on-hit-P(10)
+    8.46s  AA            dmg=   84.1  heal=   8.8  BotRK(0), on-hit-P(10)
+    8.69s  E_ACTIVATE    dmg=    0.0  heal=   0.0  instant, AA-reset
+    8.69s  E_FIRST       dmg=  345.4  heal=  93.5  E-first, BotRK(0), on-hit-P(10), vital(261.6)
+    9.27s  E_CRIT        dmg=  157.2  heal=  16.5  E-crit, BotRK(0), on-hit-P(10)
+    9.84s  AA            dmg=   83.8  heal=   8.8  BotRK(0), on-hit-P(10)
+
+======================================================================
+#9 DETAIL
+======================================================================
+Blade of the Ruined King + Ravenous Hydra — PressTheAttack
+Total: 4147.01 dmg | 414.7 DPS | 1013.69 heal
+Sequence: HYDRA_ACTIVE > W > AA > Q > AA > AA > E_ACTIVATE > E_FIRST > E_CRIT > AA > AA > AA > AA > AA > AA > AA > Q > AA > E_ACTIVATE > E_FIRST > E_CRIT
+
+Timeline:
+    0.00s  HYDRA_ACTIVE  dmg=   58.4  heal=   0.0  AA-reset, dmg(58)
+    0.00s  W             dmg=  346.5  heal=  84.7  vital(263.2)
+    0.75s  AA            dmg=  429.0  heal= 118.7  BotRK(93), vital(263.2)
+    0.87s  Q             dmg=  421.3  heal= 117.1  AA-reset, BotRK(80), vital(263.2)
+    1.12s  AA            dmg=  451.0  heal= 113.5  BotRK(67), vital(263.2), PtA-proc(47.5)
+    2.01s  AA            dmg=  136.9  heal=  28.1  BotRK(58)
+    2.13s  E_ACTIVATE    dmg=    0.0  heal=   0.0  instant, AA-reset
+    2.13s  E_FIRST       dmg=  132.5  heal=  27.2  E-first, BotRK(54)
+    2.70s  E_CRIT        dmg=  207.0  heal=  42.4  E-crit, BotRK(49)
+    3.27s  AA            dmg=  121.5  heal=  24.9  BotRK(43)
+    4.16s  AA            dmg=  401.8  heal= 108.8  BotRK(39), vital(284.3)
+    5.04s  AA            dmg=  104.5  heal=  21.4  BotRK(26)
+    5.93s  AA            dmg=  101.2  heal=  20.7  BotRK(22)
+    6.81s  AA            dmg=  382.1  heal= 104.8  BotRK(19), vital(284.3)
+    7.70s  AA            dmg=   85.5  heal=  17.5  BotRK(7)
+    8.59s  AA            dmg=   82.7  heal=  17.0  BotRK(4)
+    8.71s  Q             dmg=   85.6  heal=  17.5  AA-reset, BotRK(1)
+    8.96s  AA            dmg=   78.8  heal=  16.2  BotRK(0)
+    9.19s  E_ACTIVATE    dmg=    0.0  heal=   0.0  instant, AA-reset
+    9.19s  E_FIRST       dmg=  363.1  heal= 100.9  E-first, BotRK(0), vital(284.3)
+    9.76s  E_CRIT        dmg=  157.6  heal=  32.3  E-crit, BotRK(0)
+
+======================================================================
+#10 DETAIL
+======================================================================
+Kraken Slayer + Profane Hydra — PressTheAttack
+Total: 4119.54 dmg | 411.95 DPS | 644.74 heal
+Sequence: HYDRA_ACTIVE > AA > E_ACTIVATE > E_FIRST > W > E_CRIT > AA > AA > Q > AA > AA > AA > AA > AA > AA > E_ACTIVATE > E_FIRST > E_CRIT > AA > Q > AA > AA
+
+Timeline:
+    0.00s  HYDRA_ACTIVE  dmg=   60.7  heal=   0.0  AA-reset, dmg(61)
+    0.00s  AA            dmg=  332.1  heal=  86.6  vital(256.2)
+    0.12s  E_ACTIVATE    dmg=    0.0  heal=   0.0  instant, AA-reset
+    0.12s  E_FIRST       dmg=  332.1  heal=  86.6  E-first, vital(256.2)
+    0.20s  W             dmg=  339.5  heal=  84.7  vital(256.2)
+    0.95s  E_CRIT        dmg=  527.9  heal=  90.2  E-crit, Kraken(69), vital(256.2), PtA-proc(50.5)
+    1.52s  AA            dmg=   81.9  heal=   2.0  
+    2.41s  AA            dmg=   81.9  heal=   2.0  
+    2.53s  Q             dmg=  162.6  heal=   4.1  AA-reset, Kraken(75)
+    2.78s  AA            dmg=   81.9  heal=   2.0  
+    3.67s  AA            dmg=  358.6  heal=  86.8  vital(276.7)
+    4.55s  AA            dmg=  156.9  heal=   3.9  Kraken(75)
+    5.44s  AA            dmg=   81.9  heal=   2.0  
+    6.32s  AA            dmg=  358.6  heal=  86.8  vital(276.7)
+    7.21s  AA            dmg=  156.9  heal=   3.9  Kraken(75)
+    7.33s  E_ACTIVATE    dmg=    0.0  heal=   0.0  instant, AA-reset
+    7.33s  E_FIRST       dmg=   81.9  heal=   2.0  E-first
+    7.90s  E_CRIT        dmg=  163.8  heal=   4.1  E-crit
+    8.69s  AA            dmg=  433.6  heal=  88.6  Kraken(75), vital(276.7)
+    8.81s  Q             dmg=   87.6  heal=   2.2  AA-reset
+    9.06s  AA            dmg=   81.9  heal=   2.0  
+    9.95s  AA            dmg=  156.9  heal=   3.9  Kraken(75)

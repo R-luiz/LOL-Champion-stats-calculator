@@ -1,0 +1,226 @@
+======================================================================
+BUILD OPTIMIZER LOG: 2026-02-13 20:37:58
+======================================================================
+
+Champion: Fiora Level 14
+  AD: 113.9  AP: 0.0  HP: 1896.9  AR: 89.8  MR: 56.8
+  AS: 0.957  Lethality: 0.0  Armor Pen %: 0%  Life Steal: 2%  Omnivamp: 0%
+Target: HP=3500  Armor=200  MR=80
+Time limit: 4.0s
+Rune: PressTheAttack
+
+======================================================================
+RANKINGS
+======================================================================
+  # 1: Blade of the Ruined King + Profane Hydra              730.9 DPS  ( 2923.5 dmg,  570.1 heal)
+  # 2: Blade of the Ruined King + Ravenous Hydra             723.0 DPS  ( 2892.1 dmg,  696.9 heal)
+  # 3: Blade of the Ruined King + Wit's End                  702.2 DPS  ( 2808.8 dmg,  580.4 heal)
+  # 4: Blade of the Ruined King + Titanic Hydra              702.1 DPS  ( 2808.2 dmg,  569.1 heal)
+  # 5: Blade of the Ruined King + Kraken Slayer              695.0 DPS  ( 2779.9 dmg,  577.4 heal)
+  # 6: Blade of the Ruined King + Lord Dominik's Regards     677.6 DPS  ( 2710.3 dmg,  572.6 heal)
+  # 7: Blade of the Ruined King + Stridebreaker              669.4 DPS  ( 2677.5 dmg,  557.2 heal)
+  # 8: Trinity Force + Blade of the Ruined King              669.0 DPS  ( 2676.1 dmg,  570.3 heal)
+  # 9: Blade of the Ruined King + Voltaic Cyclosword         664.6 DPS  ( 2658.5 dmg,  553.2 heal)
+  #10: Blade of the Ruined King + Terminus                   661.0 DPS  ( 2644.2 dmg,  570.7 heal)
+
+======================================================================
+#1 DETAIL
+======================================================================
+Blade of the Ruined King + Profane Hydra — PressTheAttack
+Total: 2923.48 dmg | 730.87 DPS | 570.07 heal
+Sequence: AA > Q > AA > E_ACTIVATE > E_FIRST > E_CRIT > AA > AA > HYDRA_ACTIVE > AA > W > AA
+
+Timeline:
+    0.00s  AA            dmg=  443.8  heal= 104.4  BotRK(112), vital(256.2)
+    0.12s  Q             dmg=  434.9  heal= 103.5  AA-reset, BotRK(98), vital(256.2)
+    0.37s  AA            dmg=  466.3  heal= 101.5  BotRK(84), vital(256.2), PtA-proc(50.5)
+    0.49s  E_ACTIVATE    dmg=    0.0  heal=   0.0  instant, AA-reset
+    0.49s  E_FIRST       dmg=  432.9  heal= 101.1  E-first, BotRK(74), vital(276.7)
+    1.07s  E_CRIT        dmg=  223.2  heal=  23.4  E-crit, BotRK(59)
+    1.64s  AA            dmg=  133.6  heal=  14.0  BotRK(52)
+    2.52s  AA            dmg=  129.0  heal=  13.5  BotRK(47)
+    2.82s  HYDRA_ACTIVE  dmg=   65.5  heal=   0.0  AA-reset, dmg(66)
+    2.82s  AA            dmg=  399.0  heal=  97.5  BotRK(40), vital(276.7)
+    2.94s  W             dmg=   90.0  heal=   0.0  
+    3.71s  AA            dmg=  105.4  heal=  11.1  BotRK(24)
+
+======================================================================
+#2 DETAIL
+======================================================================
+Blade of the Ruined King + Ravenous Hydra — PressTheAttack
+Total: 2892.06 dmg | 723.02 DPS | 696.9 heal
+Sequence: AA > Q > AA > E_ACTIVATE > E_FIRST > E_CRIT > AA > AA > HYDRA_ACTIVE > AA > W > AA
+
+Timeline:
+    0.00s  AA            dmg=  441.2  heal= 121.2  BotRK(105), vital(263.2)
+    0.12s  Q             dmg=  433.1  heal= 119.5  AA-reset, BotRK(92), vital(263.2)
+    0.37s  AA            dmg=  462.5  heal= 115.8  BotRK(79), vital(263.2), PtA-proc(47.5)
+    0.49s  E_ACTIVATE    dmg=    0.0  heal=   0.0  instant, AA-reset
+    0.49s  E_FIRST       dmg=  433.1  heal= 115.2  E-first, BotRK(70), vital(284.3)
+    1.07s  E_CRIT        dmg=  213.7  heal=  43.8  E-crit, BotRK(56)
+    1.64s  AA            dmg=  127.9  heal=  26.2  BotRK(49)
+    2.52s  AA            dmg=  123.8  heal=  25.4  BotRK(45)
+    2.82s  HYDRA_ACTIVE  dmg=   63.0  heal=   0.0  AA-reset, dmg(63)
+    2.82s  AA            dmg=  402.0  heal= 108.8  BotRK(39), vital(284.3)
+    2.94s  W             dmg=   90.0  heal=   0.0  
+    3.71s  AA            dmg=  101.8  heal=  20.9  BotRK(23)
+
+======================================================================
+#3 DETAIL
+======================================================================
+Blade of the Ruined King + Wit's End — PressTheAttack
+Total: 2808.8 dmg | 702.2 DPS | 580.4 heal
+Sequence: AA > Q > AA > E_ACTIVATE > E_FIRST > E_CRIT > AA > AA > W > AA > AA
+
+Timeline:
+    0.00s  AA            dmg=  422.8  heal= 105.2  BotRK(105), on-hit-M(25), vital(228.2)
+    0.10s  Q             dmg=  414.4  heal= 104.3  AA-reset, BotRK(92), on-hit-M(25), vital(228.2)
+    0.35s  AA            dmg=  445.2  heal= 102.5  BotRK(80), on-hit-M(25), vital(228.2), PtA-proc(47.5)
+    0.45s  E_ACTIVATE    dmg=    0.0  heal=   0.0  instant, AA-reset
+    0.45s  E_FIRST       dmg=  415.1  heal= 102.4  E-first, BotRK(72), on-hit-M(27), vital(246.5)
+    0.94s  E_CRIT        dmg=  225.0  heal=  23.6  E-crit, BotRK(58), on-hit-M(27)
+    1.43s  AA            dmg=  147.9  heal=  15.5  BotRK(51), on-hit-M(27)
+    2.15s  AA            dmg=  143.1  heal=  15.0  BotRK(46), on-hit-M(27)
+    2.24s  W             dmg=   90.0  heal=   0.0  
+    2.99s  AA            dmg=  382.0  heal=  98.9  BotRK(39), on-hit-M(27), vital(246.5)
+    3.70s  AA            dmg=  123.2  heal=  12.9  BotRK(26), on-hit-M(27)
+
+======================================================================
+#4 DETAIL
+======================================================================
+Blade of the Ruined King + Titanic Hydra — PressTheAttack
+Total: 2808.24 dmg | 702.06 DPS | 569.12 heal
+Sequence: AA > Q > AA > HYDRA_ACTIVE > AA > AA > E_ACTIVATE > E_FIRST > E_CRIT > AA > W > AA
+
+Timeline:
+    0.00s  AA            dmg=  424.8  heal= 103.9  BotRK(105), on-hit-P(10), vital(242.2)
+    0.12s  Q             dmg=  416.7  heal= 103.0  AA-reset, BotRK(92), on-hit-P(10), vital(242.2)
+    0.37s  AA            dmg=  447.1  heal= 101.2  BotRK(80), on-hit-P(10), vital(242.2), PtA-proc(47.5)
+    0.49s  HYDRA_ACTIVE  dmg=   34.5  heal=   0.0  AA-reset, dmg(35)
+    0.49s  AA            dmg=  415.9  heal= 100.9  BotRK(71), on-hit-P(10), vital(261.6)
+    1.38s  AA            dmg=  140.9  heal=  14.8  BotRK(57), on-hit-P(10)
+    1.50s  E_ACTIVATE    dmg=    0.0  heal=   0.0  instant, AA-reset
+    1.50s  E_FIRST       dmg=  136.3  heal=  14.3  E-first, BotRK(52), on-hit-P(10)
+    2.07s  E_CRIT        dmg=  205.3  heal=  21.6  E-crit, BotRK(48), on-hit-P(10)
+    2.87s  AA            dmg=  386.8  heal=  97.9  BotRK(41), on-hit-P(10), vital(261.6)
+    2.99s  W             dmg=   90.0  heal=   0.0  
+    3.75s  AA            dmg=  109.8  heal=  11.5  BotRK(26), on-hit-P(10)
+
+======================================================================
+#5 DETAIL
+======================================================================
+Blade of the Ruined King + Kraken Slayer — PressTheAttack
+Total: 2779.89 dmg | 694.97 DPS | 577.36 heal
+Sequence: AA > Q > AA > E_ACTIVATE > E_FIRST > E_CRIT > AA > AA > W > AA > AA
+
+Timeline:
+    0.00s  AA            dmg=  397.8  heal= 102.5  BotRK(105), vital(228.2)
+    0.11s  Q             dmg=  390.2  heal= 101.7  AA-reset, BotRK(93), vital(228.2)
+    0.36s  AA            dmg=  487.0  heal= 106.9  BotRK(81), Kraken(65), vital(228.2), PtA-proc(47.5)
+    0.46s  E_ACTIVATE    dmg=    0.0  heal=   0.0  instant, AA-reset
+    0.46s  E_FIRST       dmg=  388.3  heal=  99.6  E-first, BotRK(72), vital(246.5)
+    0.98s  E_CRIT        dmg=  199.1  heal=  20.9  E-crit, BotRK(60)
+    1.50s  AA            dmg=  193.4  heal=  20.3  BotRK(53), Kraken(71)
+    2.27s  AA            dmg=  116.6  heal=  12.2  BotRK(47)
+    2.38s  W             dmg=  336.5  heal=  84.7  vital(246.5)
+    3.13s  AA            dmg=  101.9  heal=  10.7  BotRK(32)
+    3.89s  AA            dmg=  169.1  heal=  17.8  BotRK(29), Kraken(71)
+
+======================================================================
+#6 DETAIL
+======================================================================
+Blade of the Ruined King + Lord Dominik's Regards — PressTheAttack
+Total: 2710.31 dmg | 677.58 DPS | 572.6 heal
+Sequence: AA > Q > AA > E_ACTIVATE > E_FIRST > E_CRIT > AA > W > AA > AA
+
+Timeline:
+    0.00s  AA            dmg=  431.2  heal= 106.8  BotRK(131), vital(221.2)
+    0.12s  Q             dmg=  420.2  heal= 105.6  AA-reset, BotRK(115), vital(221.2)
+    0.37s  AA            dmg=  458.6  heal= 103.4  BotRK(99), vital(221.2), PtA-proc(59.4)
+    0.49s  E_ACTIVATE    dmg=    0.0  heal=   0.0  instant, AA-reset
+    0.49s  E_FIRST       dmg=  412.6  heal= 103.0  E-first, BotRK(89), vital(238.9)
+    1.07s  E_CRIT        dmg=  242.0  heal=  25.4  E-crit, BotRK(72)
+    1.64s  AA            dmg=  147.2  heal=  15.5  BotRK(62)
+    1.76s  W             dmg=   90.0  heal=   0.0  
+    2.52s  AA            dmg=  137.6  heal=  14.4  BotRK(53)
+    3.41s  AA            dmg=  370.9  heal=  98.6  BotRK(47), vital(238.9)
+
+======================================================================
+#7 DETAIL
+======================================================================
+Blade of the Ruined King + Stridebreaker — PressTheAttack
+Total: 2677.52 dmg | 669.38 DPS | 557.25 heal
+Sequence: STRIDEBREAKER > AA > Q > AA > E_ACTIVATE > E_FIRST > E_CRIT > AA > AA > W > AA > AA
+
+Timeline:
+    0.00s  STRIDEBREAKER  dmg=   53.0  heal=   0.0  dmg(53)
+    0.00s  AA            dmg=  404.9  heal= 102.5  BotRK(103), vital(235.2)
+    0.11s  Q             dmg=  397.2  heal= 101.7  AA-reset, BotRK(91), vital(235.2)
+    0.36s  AA            dmg=  428.4  heal= 100.0  BotRK(79), vital(235.2), PtA-proc(47.5)
+    0.47s  E_ACTIVATE    dmg=    0.0  heal=   0.0  instant, AA-reset
+    0.47s  E_FIRST       dmg=  397.4  heal=  99.8  E-first, BotRK(72), vital(254.0)
+    1.00s  E_CRIT        dmg=  202.1  heal=  21.2  E-crit, BotRK(59)
+    1.53s  AA            dmg=  124.0  heal=  13.0  BotRK(52)
+    2.32s  AA            dmg=  120.0  heal=  12.6  BotRK(48)
+    2.42s  W             dmg=  344.0  heal=  84.7  vital(254.0)
+    3.17s  AA            dmg=  104.9  heal=  11.0  BotRK(33)
+    3.96s  AA            dmg=  101.5  heal=  10.7  BotRK(30)
+
+======================================================================
+#8 DETAIL
+======================================================================
+Trinity Force + Blade of the Ruined King — PressTheAttack
+Total: 2676.08 dmg | 669.02 DPS | 570.28 heal
+Sequence: AA > Q > AA > E_ACTIVATE > E_FIRST > E_CRIT > AA > AA > W > AA > AA
+
+Timeline:
+    0.00s  AA            dmg=  389.2  heal= 102.3  BotRK(105), vital(221.2)
+    0.10s  Q             dmg=  452.2  heal= 109.0  AA-reset, BotRK(93), Spellblade(71), vital(221.2)
+    0.35s  AA            dmg=  411.4  heal=  99.7  BotRK(80), vital(221.2), PtA-proc(47.5)
+    0.45s  E_ACTIVATE    dmg=    0.0  heal=   0.0  instant, AA-reset
+    0.45s  E_FIRST       dmg=  379.7  heal=  99.5  E-first, BotRK(73), vital(238.9)
+    0.96s  E_CRIT        dmg=  196.5  heal=  20.6  E-crit, BotRK(61)
+    1.46s  AA            dmg=  122.1  heal=  12.8  BotRK(54)
+    2.20s  AA            dmg=  118.2  heal=  12.4  BotRK(50)
+    2.30s  W             dmg=  328.9  heal=  84.7  vital(238.9)
+    3.05s  AA            dmg=  179.9  heal=  18.9  BotRK(36), Spellblade(76)
+    3.79s  AA            dmg=   97.9  heal=  10.3  BotRK(30)
+
+======================================================================
+#9 DETAIL
+======================================================================
+Blade of the Ruined King + Voltaic Cyclosword — PressTheAttack
+Total: 2658.5 dmg | 664.63 DPS | 553.23 heal
+Sequence: AA > Q > AA > E_ACTIVATE > E_FIRST > E_CRIT > AA > W > AA > AA
+
+Timeline:
+    0.00s  AA            dmg=  457.1  heal= 106.5  BotRK(105), Energized(33), vital(249.2)
+    0.11s  Q             dmg=  414.9  heal= 102.1  AA-reset, BotRK(91), vital(249.2)
+    0.36s  AA            dmg=  445.2  heal= 100.3  BotRK(79), vital(249.2), PtA-proc(47.5)
+    0.47s  E_ACTIVATE    dmg=    0.0  heal=   0.0  instant, AA-reset
+    0.47s  E_FIRST       dmg=  415.1  heal= 100.0  E-first, BotRK(71), vital(269.1)
+    1.01s  E_CRIT        dmg=  207.7  heal=  21.8  E-crit, BotRK(57)
+    1.55s  AA            dmg=  125.7  heal=  13.2  BotRK(51)
+    1.66s  W             dmg=   90.0  heal=   0.0  
+    2.41s  AA            dmg=  118.8  heal=  12.5  BotRK(44)
+    3.23s  AA            dmg=  384.0  heal=  96.8  BotRK(40), vital(269.1)
+
+======================================================================
+#10 DETAIL
+======================================================================
+Blade of the Ruined King + Terminus — PressTheAttack
+Total: 2644.16 dmg | 661.04 DPS | 570.7 heal
+Sequence: AA > Q > AA > E_ACTIVATE > E_FIRST > E_CRIT > AA > W > AA > AA > AA
+
+Timeline:
+    0.00s  AA            dmg=  397.2  heal= 103.9  BotRK(105), on-hit-M(17), vital(214.2)
+    0.10s  Q             dmg=  389.2  heal= 103.1  AA-reset, BotRK(93), on-hit-M(17), vital(214.2)
+    0.35s  AA            dmg=  421.1  heal= 101.4  BotRK(81), on-hit-M(17), vital(214.2), PtA-proc(47.5)
+    0.46s  E_ACTIVATE    dmg=    0.0  heal=   0.0  instant, AA-reset
+    0.46s  E_FIRST       dmg=  389.8  heal= 101.3  E-first, BotRK(74), on-hit-M(18), vital(231.3)
+    0.97s  E_CRIT        dmg=  212.1  heal=  22.3  E-crit, BotRK(62), on-hit-M(18)
+    1.48s  AA            dmg=  139.0  heal=  14.6  BotRK(55), on-hit-M(18)
+    1.58s  W             dmg=   90.0  heal=   0.0  
+    2.33s  AA            dmg=  131.6  heal=  13.8  BotRK(47), on-hit-M(18)
+    3.08s  AA            dmg=  358.6  heal=  98.1  BotRK(43), on-hit-M(18), vital(231.3)
+    3.83s  AA            dmg=  115.7  heal=  12.2  BotRK(31), on-hit-M(18)

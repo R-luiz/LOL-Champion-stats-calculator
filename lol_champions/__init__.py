@@ -29,7 +29,7 @@ from .items import (
     Tiamat, GuinsoosRageblade,
 )
 from .dps import optimize_dps
-from .build_optimizer import optimize_build, ITEM_CATALOG, validate_catalog
+from .build_optimizer import optimize_build, ITEM_CATALOG, ITEM_ID_TO_PROC, validate_catalog
 from .logger import log_result, log_build_results
 from .live_client import is_game_active, get_active_player, get_player_list, get_game_stats
 from .data_dragon import DataDragon
@@ -52,7 +52,7 @@ __all__ = [
     'SunderedSky', 'DeadMansPlate',
     'Tiamat', 'GuinsoosRageblade',
     'optimize_dps',
-    'optimize_build', 'ITEM_CATALOG', 'validate_catalog',
+    'optimize_build', 'ITEM_CATALOG', 'ITEM_ID_TO_PROC', 'validate_catalog',
     'log_result', 'log_build_results',
     'is_game_active', 'get_active_player', 'get_player_list', 'get_game_stats',
     'DataDragon',

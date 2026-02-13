@@ -274,6 +274,13 @@ ITEM_CATALOG: Dict[str, Dict[str, Any]] = {
     },
 }
 
+# Reverse lookup: Riot item ID → proc class (for live client detection)
+ITEM_ID_TO_PROC = {
+    entry["id"]: entry["proc"]
+    for entry in ITEM_CATALOG.values()
+    if entry.get("proc")
+}
+
 
 # ═══════════════════════════════════════════════════════════════════════
 # DATA DRAGON VALIDATION

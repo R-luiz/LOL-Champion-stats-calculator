@@ -20,7 +20,7 @@ import sys
 import time
 from contextlib import redirect_stdout
 
-from lol_champions import Fiora, Target, calculate_damage, optimize_dps
+from lol_champions import Fiora, Target, calculate_damage, optimize_dps, ITEM_ID_TO_PROC
 from lol_champions.runes import (
     PressTheAttack, Conqueror, HailOfBlades, GraspOfTheUndying,
     LastStand, CoupDeGrace, CutDown,
@@ -45,8 +45,11 @@ MINOR_RUNE_MAP = {
     8017: "cut_down",
 }
 
-# ─── Item IDs with modeled passives ───────────────────────────────────
-SHOJIN_ITEM_ID = 3161
+# ─── Enemy damage reduction items ────────────────────────────────────
+# Plated Steelcaps: 12% reduction on basic attack damage (AA, E empowered)
+# Does NOT reduce spells (Q, W) or on-hit procs (BotRK, Vital, etc.)
+STEELCAPS_ITEM_ID = 3047
+STEELCAPS_REDUCTION = 0.12  # 12% basic attack damage reduction
 
 # ─── Rune stat shard HP estimation ───────────────────────────────────
 # The Live Client API doesn't expose enemy stat shards.  On first
@@ -175,24 +178,13 @@ def _detect_minor_runes(player_data: dict) -> set:
     return detected
 
 
-def _detect_items(player_data: dict, ddragon: DataDragon | None) -> tuple:
-    """Detect item passives and collect item names.
-
-    Returns:
-        (items_list, item_names, has_shojin, bonus_as_from_items)
-    """
-    items_list = []
-    item_names = []
-    has_shojin = False
-    bonus_as = 0.0
-
-    # Active player data has items in the playerlist, not in activeplayer
-    # We'll call this with the player's entry from playerlist
-    return items_list, item_names, has_shojin, bonus_as
-
-
 def _detect_items_from_playerlist(player_entry: dict, ddragon: DataDragon | None) -> tuple:
     """Detect items from a playerlist entry.
+
+    Uses ITEM_ID_TO_PROC (derived from ITEM_CATALOG) to instantiate
+    proc classes for all recognized items, so the DPS optimizer can
+    account for on-hit, spellblade, energized, burn, active, and
+    conditional item effects.
 
     Returns:
         (items_list, item_names, has_shojin, bonus_as_from_items)
@@ -207,9 +199,12 @@ def _detect_items_from_playerlist(player_entry: dict, ddragon: DataDragon | None
         name = item.get("displayName", "?")
         item_names.append(name)
 
-        if iid == SHOJIN_ITEM_ID:
-            has_shojin = True
-            items_list.append(SpearOfShojin(stacks=0))
+        # Instantiate proc class if this item has a modeled passive
+        proc_cls = ITEM_ID_TO_PROC.get(iid)
+        if proc_cls is not None:
+            items_list.append(proc_cls())
+            if iid == 3161:  # Spear of Shojin
+                has_shojin = True
 
         if ddragon:
             istats = ddragon.item_stats(iid)
@@ -303,6 +298,25 @@ def _find_my_entry(player_list: list, active_name: str) -> dict | None:
     return None
 
 
+def _detect_enemy_reductions(enemy_entry: dict | None) -> dict:
+    """Detect damage reduction items on the enemy.
+
+    Returns dict with:
+        aa_reduction: float — multiplier for basic attack damage (e.g. 0.88 for Steelcaps)
+        notes: list of str — display notes for detected reductions
+    """
+    result = {"aa_reduction": 1.0, "notes": []}
+    if not enemy_entry:
+        return result
+
+    for item in enemy_entry.get("items", []):
+        iid = item.get("itemID", 0)
+        if iid == STEELCAPS_ITEM_ID:
+            result["aa_reduction"] *= (1.0 - STEELCAPS_REDUCTION)
+            result["notes"].append(f"Steelcaps (-{STEELCAPS_REDUCTION:.0%} AA)")
+    return result
+
+
 def _build_modifiers(fiora, target, minor_runes: set,
                      current_hp: float, max_hp: float) -> list:
     """Build damage_modifiers list from detected minor runes."""
@@ -338,8 +352,12 @@ def _sustain_heal(dmg: float, is_on_hit: bool, ls: float, ov: float) -> float:
 
 
 def _compute_damage(fiora, target, mods, items_list, has_shojin,
-                     keystone_name=None, keystone=None):
-    """Compute single-ability damages. Returns dict of results."""
+                     keystone_name=None, keystone=None, aa_reduction=1.0):
+    """Compute single-ability damages. Returns dict of results.
+
+    aa_reduction: multiplier for basic attack damage (e.g. 0.88 for Steelcaps).
+                  Applied to AA and E (empowered autos) but NOT Q/W/Vital.
+    """
     results = {}
     ls = fiora.life_steal
     ov = fiora.omnivamp
@@ -382,18 +400,20 @@ def _compute_damage(fiora, target, mods, items_list, has_shojin,
             results["W+pta"] = (w_amped["total_damage"], "magic")
             results["W_heal_pta"] = _sustain_heal(w_amped["total_damage"], False, ls, ov)
 
-    # E (crit, on-hit: LS + OV)
+    # E (crit, on-hit: LS + OV) — basic attack, reduced by Steelcaps
     e_data = fiora.E()
     if "error" not in e_data:
         e_mods = mods + ([shojin_mod] if shojin_mod else [])
         e_dmg = calculate_damage(e_data, target, champion=fiora, damage_modifiers=e_mods)
-        results["E crit"] = (e_dmg["total_damage"], "physical")
-        results["E crit_heal"] = _sustain_heal(e_dmg["total_damage"], True, ls, ov)
+        e_final = e_dmg["total_damage"] * aa_reduction
+        results["E crit"] = (e_final, "physical")
+        results["E crit_heal"] = _sustain_heal(e_final, True, ls, ov)
         if pta_mod:
             e_amped = calculate_damage(e_data, target, champion=fiora,
                                        damage_modifiers=e_mods + [pta_mod])
-            results["E crit+pta"] = (e_amped["total_damage"], "physical")
-            results["E crit_heal_pta"] = _sustain_heal(e_amped["total_damage"], True, ls, ov)
+            e_amped_final = e_amped["total_damage"] * aa_reduction
+            results["E crit+pta"] = (e_amped_final, "physical")
+            results["E crit_heal_pta"] = _sustain_heal(e_amped_final, True, ls, ov)
 
     # Passive (vital): flat heal + OV on true damage
     passive_mods = mods + ([shojin_mod] if shojin_mod else [])
@@ -410,22 +430,82 @@ def _compute_damage(fiora, target, mods, items_list, has_shojin,
         results["Vital+pta"] = (vital_amped["total_damage"], "true")
         results["Vital_heal_pta"] = round(vital_flat_heal + vital_amped["total_damage"] * ov, 1)
 
-    # AA (on-hit: LS + OV)
+    # AA (on-hit: LS + OV) — basic attack, reduced by Steelcaps
     aa_data = fiora.auto_attack()
     aa_dmg = calculate_damage(aa_data, target, champion=fiora, damage_modifiers=mods)
-    results["AA"] = (aa_dmg["total_damage"], "physical")
-    results["AA_heal"] = _sustain_heal(aa_dmg["total_damage"], True, ls, ov)
+    aa_final = aa_dmg["total_damage"] * aa_reduction
+    results["AA"] = (aa_final, "physical")
+    results["AA_heal"] = _sustain_heal(aa_final, True, ls, ov)
     if pta_mod:
         aa_amped = calculate_damage(aa_data, target, champion=fiora,
                                     damage_modifiers=mods + [pta_mod])
-        results["AA+pta"] = (aa_amped["total_damage"], "physical")
-        results["AA_heal_pta"] = _sustain_heal(aa_amped["total_damage"], True, ls, ov)
+        aa_amped_final = aa_amped["total_damage"] * aa_reduction
+        results["AA+pta"] = (aa_amped_final, "physical")
+        results["AA_heal_pta"] = _sustain_heal(aa_amped_final, True, ls, ov)
 
     # PTA proc damage
     if keystone_name == "pta" and keystone:
         proc = keystone.proc_damage(fiora.level, fiora.bonus_AD, fiora.bonus_AP)
         proc_dmg = calculate_damage(proc, target, champion=fiora, damage_modifiers=mods)
         results["PtA proc"] = (proc_dmg["total_damage"], proc["damage_type"])
+
+    # Item proc damages
+    item_procs = []
+    for item in items_list:
+        if isinstance(item, SpearOfShojin):
+            continue  # amplifier only, no damage proc
+
+        # Categorize for display label
+        label = "on-hit"
+        if hasattr(item, 'is_spellblade') and item.is_spellblade():
+            label = "spellblade"
+        elif hasattr(item, 'is_energized') and item.is_energized():
+            label = "energized"
+        elif hasattr(item, 'is_active') and item.is_active():
+            label = "active"
+        elif hasattr(item, 'is_conditional') and item.is_conditional():
+            label = "conditional"
+        elif hasattr(item, 'is_burn') and item.is_burn():
+            label = "burn"
+        elif hasattr(item, 'is_immolate') and item.is_immolate():
+            label = "immolate"
+
+        if hasattr(item, 'proc_damage'):
+            proc_data = item.proc_damage(fiora, target)
+            proc_result = calculate_damage(proc_data, target, champion=fiora,
+                                           damage_modifiers=mods)
+            pta_dmg = None
+            if pta_mod:
+                pta_result = calculate_damage(proc_data, target, champion=fiora,
+                                              damage_modifiers=mods + [pta_mod])
+                pta_dmg = pta_result["total_damage"]
+            item_procs.append((item.name, proc_result["total_damage"],
+                               proc_data["damage_type"], label, pta_dmg))
+        elif hasattr(item, 'burn_damage'):
+            burn_data = item.burn_damage(target)
+            burn_result = calculate_damage(burn_data, target, champion=fiora,
+                                           damage_modifiers=mods)
+            pta_dmg = None
+            if pta_mod:
+                pta_result = calculate_damage(burn_data, target, champion=fiora,
+                                              damage_modifiers=mods + [pta_mod])
+                pta_dmg = pta_result["total_damage"]
+            item_procs.append((item.name, burn_result["total_damage"],
+                               burn_data["damage_type"], label, pta_dmg))
+        elif hasattr(item, 'dps'):
+            raw_dps = item.dps(fiora)
+            dps_data = {"raw_damage": raw_dps, "damage_type": "magic"}
+            dps_result = calculate_damage(dps_data, target, champion=fiora,
+                                          damage_modifiers=mods)
+            pta_dmg = None
+            if pta_mod:
+                pta_result = calculate_damage(dps_data, target, champion=fiora,
+                                              damage_modifiers=mods + [pta_mod])
+                pta_dmg = pta_result["total_damage"]
+            item_procs.append((item.name, dps_result["total_damage"],
+                               "magic", "immolate/s", pta_dmg))
+
+    results["item_procs"] = item_procs
 
     return results
 
@@ -439,7 +519,7 @@ def _format_time(seconds: float) -> str:
 
 def _display(fiora, target, target_label, keystone_name, minor_runes,
              current_hp, max_hp, item_names, damages, game_time,
-             dps_result=None, kill_result=None):
+             dps_result=None, kill_result=None, enemy_reductions=None):
     """Clear screen and print formatted damage summary."""
     # Clear screen
     os.system('cls' if os.name == 'nt' else 'clear')
@@ -493,6 +573,9 @@ def _display(fiora, target, target_label, keystone_name, minor_runes,
     # Target
     print(f"  Target: {target_label}")
     print(f"  Armor: {target.armor:.0f} | MR: {target.mr:.0f} | HP: {target.max_hp:.0f}")
+    if enemy_reductions and enemy_reductions.get("notes"):
+        notes = ", ".join(enemy_reductions["notes"])
+        print(f"  \033[90mReductions: {notes}\033[0m")
     print(f"{'-' * 56}")
 
     # Damage values
@@ -529,6 +612,21 @@ def _display(fiora, target, target_label, keystone_name, minor_runes,
         proc_dmg, _ = damages["PtA proc"]
         proc_pct = proc_dmg / t_hp * 100
         print(f"  \033[31m{'PtA proc':<10} {proc_dmg:>8.1f}  ({proc_pct:>5.1f}%)\033[0m")
+
+    # Item proc damages
+    item_procs = damages.get("item_procs", [])
+    if item_procs:
+        print(f"  {'─' * 40}")
+        for iname, idmg, idtype, ilabel, ipta in item_procs:
+            ipct = idmg / t_hp * 100
+            icolor = {"physical": "\033[33m", "magic": "\033[36m",
+                       "true": "\033[37m"}.get(idtype, "")
+            pta_str = ""
+            if has_pta and ipta is not None:
+                ipta_pct = ipta / t_hp * 100
+                pta_str = f"  \033[31m[PtA: {ipta:>7.1f} ({ipta_pct:>5.1f}%)]\033[0m"
+            print(f"  {iname:<18} {icolor}{idmg:>7.1f}  ({ipct:>5.1f}%)\033[0m"
+                  f"  \033[90m[{ilabel}]\033[0m{pta_str}")
 
     # DPS
     if dps_result:
@@ -675,6 +773,9 @@ def main():
 
             target, target_label = _build_target(args, enemy, ddragon, target_calibration)
 
+            # Detect enemy damage reductions (e.g. Plated Steelcaps)
+            enemy_reductions = _detect_enemy_reductions(enemy)
+
             # Detect runes
             keystone_name, keystone = _detect_keystone(player_data)
             minor_runes = _detect_minor_runes(player_data)
@@ -684,7 +785,8 @@ def main():
 
             # Compute damages
             damages = _compute_damage(fiora, target, mods, items_list, has_shojin,
-                                      keystone_name, keystone)
+                                      keystone_name, keystone,
+                                      aa_reduction=enemy_reductions["aa_reduction"])
 
             # DPS optimizer (optional)
             dps_result = None
@@ -741,7 +843,7 @@ def main():
             _display(
                 fiora, target, target_label, keystone_name, minor_runes,
                 current_hp, max_hp, item_names, damages, game_time,
-                dps_result, kill_result,
+                dps_result, kill_result, enemy_reductions,
             )
 
             time.sleep(args.interval)

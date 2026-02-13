@@ -1,0 +1,286 @@
+======================================================================
+BUILD OPTIMIZER LOG: 2026-02-13 20:14:41
+======================================================================
+
+Champion: Fiora Level 9
+  AD: 96.2  AP: 0.0  HP: 1367.3  AR: 64.7  MR: 45.8
+  AS: 0.839  Lethality: 0.0  Armor Pen %: 0%  Life Steal: 2%  Omnivamp: 0%
+Target: HP=2000  Armor=65  MR=40
+Time limit: 10.0s
+Rune: Conqueror
+
+======================================================================
+RANKINGS
+======================================================================
+  # 1: Wit's End                                             289.7 DPS  ( 2896.8 dmg,  667.0 heal)
+  # 2: Kraken Slayer                                         282.7 DPS  ( 2827.1 dmg,  661.4 heal)
+  # 3: Blade of the Ruined King                              276.8 DPS  ( 2767.6 dmg,  793.0 heal)
+  # 4: Profane Hydra                                         275.9 DPS  ( 2759.4 dmg,  638.2 heal)
+  # 5: Trinity Force                                         271.4 DPS  ( 2713.6 dmg,  710.8 heal)
+  # 6: Ravenous Hydra                                        263.5 DPS  ( 2635.4 dmg,  786.6 heal)
+  # 7: Voltaic Cyclosword                                    259.0 DPS  ( 2590.0 dmg,  693.8 heal)
+  # 8: Titanic Hydra                                         258.4 DPS  ( 2584.0 dmg,  629.2 heal)
+  # 9: Terminus                                              254.2 DPS  ( 2541.5 dmg,  696.2 heal)
+  #10: Stridebreaker                                         243.2 DPS  ( 2431.7 dmg,  618.3 heal)
+
+======================================================================
+#1 DETAIL
+======================================================================
+Wit's End — Conqueror
+Total: 2896.8 dmg | 289.68 DPS | 667.03 heal
+Sequence: AA > Q > AA > W > AA > AA > AA > AA > AA > E_ACTIVATE > E_FIRST > E_CRIT > AA > AA > Q > AA > AA > AA
+
+Timeline:
+    0.00s  AA            dmg=  213.1  heal=  68.5  on-hit-M(32), vital(98.4)
+    0.12s  Q             dmg=  229.2  heal=  68.9  AA-reset, on-hit-M(32), vital(98.4)
+    0.37s  AA            dmg=  213.1  heal=  68.5  on-hit-M(32), vital(98.4)
+    0.50s  W             dmg=  177.0  heal=  65.6  vital(98.4)
+    1.27s  AA            dmg=  114.7  heal=   2.9  on-hit-M(32)
+    2.17s  AA            dmg=  114.7  heal=  12.1  on-hit-M(32)
+    3.25s  AA            dmg=  243.2  heal=  88.2  on-hit-M(32), vital(115.5)
+    4.14s  AA            dmg=  127.7  heal=  13.4  on-hit-M(32)
+    5.04s  AA            dmg=  127.7  heal=  13.4  on-hit-M(32)
+    5.17s  E_ACTIVATE    dmg=    0.0  heal=   0.0  instant, AA-reset
+    5.17s  E_FIRST       dmg=  127.7  heal=  13.4  E-first, on-hit-M(32)
+    5.82s  E_CRIT        dmg=  310.0  heal=  95.2  E-crit, on-hit-M(32), vital(115.5)
+    6.47s  AA            dmg=  127.7  heal=  13.4  on-hit-M(32)
+    7.37s  AA            dmg=  127.7  heal=  13.4  on-hit-M(32)
+    7.49s  Q             dmg=  145.1  heal=  15.2  AA-reset, on-hit-M(32)
+    7.74s  AA            dmg=  127.7  heal=  13.4  on-hit-M(32)
+    8.64s  AA            dmg=  243.2  heal=  88.2  on-hit-M(32), vital(115.5)
+    9.54s  AA            dmg=  127.7  heal=  13.4  on-hit-M(32)
+
+======================================================================
+#2 DETAIL
+======================================================================
+Kraken Slayer — Conqueror
+Total: 2827.14 dmg | 282.71 DPS | 661.37 heal
+Sequence: AA > Q > AA > W > AA > AA > E_ACTIVATE > E_FIRST > E_CRIT > AA > AA > AA > AA > AA > Q > AA > AA
+
+Timeline:
+    0.00s  AA            dmg=  181.0  heal=  67.7  vital(98.4)
+    0.14s  Q             dmg=  197.1  heal=  68.1  AA-reset, vital(98.4)
+    0.39s  AA            dmg=  289.0  heal=  70.3  Kraken(108), vital(98.4)
+    0.52s  W             dmg=  177.0  heal=  65.6  vital(98.4)
+    1.38s  AA            dmg=   82.6  heal=   2.1  
+    2.36s  AA            dmg=   82.6  heal=   8.7  
+    2.50s  E_ACTIVATE    dmg=    0.0  heal=   0.0  instant, AA-reset
+    2.50s  E_FIRST       dmg=  203.5  heal=  21.4  E-first, Kraken(108)
+    3.27s  E_CRIT        dmg=  277.9  heal=  91.9  E-crit, vital(115.5)
+    3.97s  AA            dmg=   95.5  heal=  10.0  
+    4.96s  AA            dmg=  203.5  heal=  21.4  Kraken(108)
+    5.95s  AA            dmg=  211.0  heal=  84.9  vital(115.5)
+    6.94s  AA            dmg=   95.5  heal=  10.0  
+    7.93s  AA            dmg=  203.5  heal=  21.4  Kraken(108)
+    8.34s  Q             dmg=  228.4  heal=  86.7  AA-reset, vital(115.5)
+    8.59s  AA            dmg=   95.5  heal=  10.0  
+    9.58s  AA            dmg=  203.5  heal=  21.4  Kraken(108)
+
+======================================================================
+#3 DETAIL
+======================================================================
+Blade of the Ruined King — Conqueror
+Total: 2767.64 dmg | 276.76 DPS | 793.03 heal
+Sequence: AA > Q > AA > W > AA > E_ACTIVATE > E_FIRST > E_CRIT > AA > AA > AA > AA > Q > AA > AA > AA > AA
+
+Timeline:
+    0.00s  AA            dmg=  290.1  heal=  85.7  BotRK(109), vital(98.4)
+    0.14s  Q             dmg=  290.4  heal=  85.7  AA-reset, BotRK(93), vital(98.4)
+    0.39s  AA            dmg=  258.4  heal=  82.4  BotRK(77), vital(98.4)
+    0.52s  W             dmg=  177.0  heal=  65.6  vital(98.4)
+    1.38s  AA            dmg=  136.3  heal=  14.3  BotRK(54)
+    1.51s  E_ACTIVATE    dmg=    0.0  heal=   0.0  instant, AA-reset
+    1.51s  E_FIRST       dmg=  128.8  heal=  23.8  E-first, BotRK(46)
+    2.21s  E_CRIT        dmg=  201.6  heal=  37.3  E-crit, BotRK(39)
+    2.92s  AA            dmg=  123.8  heal=  22.9  BotRK(28)
+    3.90s  AA            dmg=  232.5  heal=  96.5  BotRK(21), vital(115.5)
+    4.89s  AA            dmg=  104.3  heal=  19.3  BotRK(9)
+    6.14s  AA            dmg=   98.6  heal=  18.2  BotRK(3)
+    6.29s  Q             dmg=  228.4  heal=  95.7  AA-reset, BotRK(0), vital(115.5)
+    6.54s  AA            dmg=   95.5  heal=  17.7  BotRK(0)
+    7.53s  AA            dmg=   95.5  heal=  17.7  BotRK(0)
+    8.79s  AA            dmg=  211.0  heal=  92.5  BotRK(0), vital(115.5)
+    9.78s  AA            dmg=   95.5  heal=  17.7  BotRK(0)
+
+======================================================================
+#4 DETAIL
+======================================================================
+Profane Hydra — Conqueror
+Total: 2759.37 dmg | 275.94 DPS | 638.21 heal
+Sequence: HYDRA_ACTIVE > AA > Q > AA > W > AA > E_ACTIVATE > E_FIRST > E_CRIT > AA > AA > AA > AA > AA > Q > AA > AA
+
+Timeline:
+    0.00s  HYDRA_ACTIVE  dmg=   85.0  heal=   0.0  AA-reset, dmg(85)
+    0.00s  AA            dmg=  220.7  heal=  68.2  vital(114.4)
+    0.16s  Q             dmg=  240.1  heal=  68.7  AA-reset, vital(114.4)
+    0.41s  AA            dmg=  220.7  heal=  68.2  vital(114.4)
+    0.58s  W             dmg=  193.0  heal=  65.6  vital(114.4)
+    1.61s  AA            dmg=  106.3  heal=   2.7  
+    1.77s  E_ACTIVATE    dmg=    0.0  heal=   0.0  instant, AA-reset
+    1.77s  E_FIRST       dmg=  106.3  heal=  11.2  E-first
+    2.57s  E_CRIT        dmg=  205.4  heal=  21.6  E-crit
+    3.37s  AA            dmg=  252.3  heal=  88.8  vital(131.5)
+    4.56s  AA            dmg=  120.8  heal=  12.7  
+    5.78s  AA            dmg=  252.3  heal=  88.8  vital(131.5)
+    6.97s  AA            dmg=  120.8  heal=  12.7  
+    8.20s  AA            dmg=  252.3  heal=  88.8  vital(131.5)
+    8.36s  Q             dmg=  141.7  heal=  14.9  AA-reset
+    8.61s  AA            dmg=  120.8  heal=  12.7  
+    9.80s  AA            dmg=  120.8  heal=  12.7  
+
+======================================================================
+#5 DETAIL
+======================================================================
+Trinity Force — Conqueror
+Total: 2713.62 dmg | 271.36 DPS | 710.8 heal
+Sequence: AA > Q > AA > E_ACTIVATE > E_FIRST > E_CRIT > AA > AA > AA > AA > W > AA > AA > AA > AA > Q > AA > AA
+
+Timeline:
+    0.00s  AA            dmg=  173.9  heal=  67.6  vital(94.4)
+    0.13s  Q             dmg=  296.7  heal=  70.7  AA-reset, Spellblade(107), vital(94.4)
+    0.38s  AA            dmg=  173.9  heal=  67.6  vital(94.4)
+    0.51s  E_ACTIVATE    dmg=    0.0  heal=   0.0  instant, AA-reset
+    0.51s  E_FIRST       dmg=  173.9  heal=  67.6  E-first, vital(94.4)
+    1.18s  E_CRIT        dmg=  135.2  heal=   3.4  E-crit
+    1.86s  AA            dmg=   79.5  heal=   8.3  
+    2.85s  AA            dmg=  204.0  heal=  84.2  vital(111.5)
+    3.79s  AA            dmg=   92.5  heal=   9.7  
+    4.73s  AA            dmg=   92.5  heal=   9.7  
+    4.86s  W             dmg=  190.1  heal=  80.8  vital(111.5)
+    5.66s  AA            dmg=  199.4  heal=  20.9  Spellblade(107)
+    6.60s  AA            dmg=   92.5  heal=   9.7  
+    7.54s  AA            dmg=  204.0  heal=  84.2  vital(111.5)
+    8.48s  AA            dmg=   92.5  heal=   9.7  
+    8.61s  Q             dmg=  216.5  heal=  22.7  AA-reset, Spellblade(107)
+    8.86s  AA            dmg=   92.5  heal=   9.7  
+    9.79s  AA            dmg=  204.0  heal=  84.2  vital(111.5)
+
+======================================================================
+#6 DETAIL
+======================================================================
+Ravenous Hydra — Conqueror
+Total: 2635.43 dmg | 263.54 DPS | 786.63 heal
+Sequence: HYDRA_ACTIVE > AA > Q > AA > W > AA > E_ACTIVATE > E_FIRST > E_CRIT > AA > AA > AA > AA > AA > Q > AA > AA
+
+Timeline:
+    0.00s  HYDRA_ACTIVE  dmg=   78.2  heal=   0.0  AA-reset, dmg(78)
+    0.00s  AA            dmg=  216.1  heal=  77.8  vital(118.4)
+    0.16s  Q             dmg=  233.7  heal=  80.0  AA-reset, vital(118.4)
+    0.41s  AA            dmg=  216.1  heal=  77.8  vital(118.4)
+    0.58s  W             dmg=  197.0  heal=  65.6  vital(118.4)
+    1.61s  AA            dmg=   97.7  heal=  12.2  
+    1.77s  E_ACTIVATE    dmg=    0.0  heal=   0.0  instant, AA-reset
+    1.77s  E_FIRST       dmg=   97.7  heal=  20.0  E-first
+    2.57s  E_CRIT        dmg=  188.1  heal=  38.6  E-crit
+    3.37s  AA            dmg=  246.2  heal=  99.1  vital(135.5)
+    4.56s  AA            dmg=  110.7  heal=  22.7  
+    5.78s  AA            dmg=  246.2  heal=  99.1  vital(135.5)
+    6.97s  AA            dmg=  110.7  heal=  22.7  
+    8.20s  AA            dmg=  246.2  heal=  99.1  vital(135.5)
+    8.36s  Q             dmg=  129.6  heal=  26.6  AA-reset
+    8.61s  AA            dmg=  110.7  heal=  22.7  
+    9.80s  AA            dmg=  110.7  heal=  22.7  
+
+======================================================================
+#7 DETAIL
+======================================================================
+Voltaic Cyclosword — Conqueror
+Total: 2590.0 dmg | 259.0 DPS | 693.82 heal
+Sequence: AA > Q > AA > E_ACTIVATE > E_FIRST > W > E_CRIT > AA > AA > AA > AA > AA > Q > AA > AA > AA
+
+Timeline:
+    0.00s  AA            dmg=  262.7  heal=  69.4  Energized(61), vital(110.4)
+    0.15s  Q             dmg=  219.1  heal=  68.3  AA-reset, vital(110.4)
+    0.40s  AA            dmg=  202.1  heal=  67.9  vital(110.4)
+    0.54s  E_ACTIVATE    dmg=    0.0  heal=   0.0  instant, AA-reset
+    0.54s  E_FIRST       dmg=  202.1  heal=  67.9  E-first, vital(110.4)
+    1.28s  W             dmg=   78.6  heal=   0.0  
+    2.03s  E_CRIT        dmg=  155.8  heal=  16.4  E-crit
+    2.77s  AA            dmg=  232.1  heal=  86.8  vital(127.5)
+    3.83s  AA            dmg=  104.6  heal=  11.0  
+    5.16s  AA            dmg=  232.1  heal=  86.8  vital(127.5)
+    6.22s  AA            dmg=  104.6  heal=  11.0  
+    7.29s  AA            dmg=  104.6  heal=  11.0  
+    7.43s  Q             dmg=  250.4  heal=  88.7  AA-reset, vital(127.5)
+    7.68s  AA            dmg=  104.6  heal=  11.0  
+    8.74s  AA            dmg=  104.6  heal=  11.0  
+    9.80s  AA            dmg=  232.1  heal=  86.8  vital(127.5)
+
+======================================================================
+#8 DETAIL
+======================================================================
+Titanic Hydra — Conqueror
+Total: 2583.98 dmg | 258.4 DPS | 629.17 heal
+Sequence: HYDRA_ACTIVE > AA > Q > AA > W > AA > E_ACTIVATE > E_FIRST > E_CRIT > AA > AA > AA > AA > Q > AA > AA > AA
+
+Timeline:
+    0.00s  HYDRA_ACTIVE  dmg=   45.3  heal=   0.0  AA-reset, dmg(45)
+    0.00s  AA            dmg=  209.4  heal=  68.2  on-hit-P(14), vital(106.4)
+    0.16s  Q             dmg=  226.1  heal=  68.6  AA-reset, on-hit-P(14), vital(106.4)
+    0.41s  AA            dmg=  209.4  heal=  68.2  on-hit-P(14), vital(106.4)
+    0.58s  W             dmg=  185.0  heal=  65.6  vital(106.4)
+    1.61s  AA            dmg=  103.0  heal=   2.6  on-hit-P(14)
+    1.77s  E_ACTIVATE    dmg=    0.0  heal=   0.0  instant, AA-reset
+    1.77s  E_FIRST       dmg=  103.0  heal=  10.8  E-first, on-hit-P(14)
+    2.57s  E_CRIT        dmg=  187.0  heal=  19.6  E-crit, on-hit-P(14)
+    3.37s  AA            dmg=  239.4  heal=  87.6  on-hit-P(14), vital(123.5)
+    4.56s  AA            dmg=  115.9  heal=  12.2  on-hit-P(14)
+    5.78s  AA            dmg=  239.4  heal=  87.6  on-hit-P(14), vital(123.5)
+    6.97s  AA            dmg=  115.9  heal=  12.2  on-hit-P(14)
+    7.14s  Q             dmg=  133.9  heal=  14.1  AA-reset, on-hit-P(14)
+    7.39s  AA            dmg=  115.9  heal=  12.2  on-hit-P(14)
+    8.58s  AA            dmg=  239.4  heal=  87.6  on-hit-P(14), vital(123.5)
+    9.77s  AA            dmg=  115.9  heal=  12.2  on-hit-P(14)
+
+======================================================================
+#9 DETAIL
+======================================================================
+Terminus — Conqueror
+Total: 2541.53 dmg | 254.15 DPS | 696.19 heal
+Sequence: AA > Q > AA > E_ACTIVATE > E_FIRST > E_CRIT > AA > AA > AA > AA > AA > AA > Q > AA > AA > AA > W
+
+Timeline:
+    0.00s  AA            dmg=  188.3  heal=  68.0  on-hit-M(21), vital(90.4)
+    0.13s  Q             dmg=  203.8  heal=  68.4  AA-reset, on-hit-M(21), vital(90.4)
+    0.38s  AA            dmg=  188.3  heal=  68.0  on-hit-M(21), vital(90.4)
+    0.51s  E_ACTIVATE    dmg=    0.0  heal=   0.0  instant, AA-reset
+    0.51s  E_FIRST       dmg=  188.3  heal=  68.0  E-first, on-hit-M(21), vital(90.4)
+    1.20s  E_CRIT        dmg=  151.5  heal=   3.8  E-crit, on-hit-M(21)
+    1.88s  AA            dmg=   97.9  heal=  10.3  on-hit-M(21)
+    2.86s  AA            dmg=  218.4  heal=  85.8  on-hit-M(21), vital(107.5)
+    3.81s  AA            dmg=  110.9  heal=  11.6  on-hit-M(21)
+    5.24s  AA            dmg=  218.4  heal=  85.8  on-hit-M(21), vital(107.5)
+    6.20s  AA            dmg=  110.9  heal=  11.6  on-hit-M(21)
+    7.15s  AA            dmg=  110.9  heal=  11.6  on-hit-M(21)
+    7.28s  Q             dmg=  127.7  heal=  13.4  AA-reset, on-hit-M(21)
+    7.53s  AA            dmg=  218.4  heal=  85.8  on-hit-M(21), vital(107.5)
+    8.49s  AA            dmg=  110.9  heal=  11.6  on-hit-M(21)
+    9.45s  AA            dmg=  110.9  heal=  11.6  on-hit-M(21)
+    9.58s  W             dmg=  186.1  heal=  80.5  vital(107.5)
+
+======================================================================
+#10 DETAIL
+======================================================================
+Stridebreaker — Conqueror
+Total: 2431.69 dmg | 243.17 DPS | 618.29 heal
+Sequence: STRIDEBREAKER > AA > Q > AA > W > AA > AA > E_ACTIVATE > E_FIRST > E_CRIT > AA > AA > AA > AA > AA > Q > AA > AA
+
+Timeline:
+    0.00s  STRIDEBREAKER  dmg=   68.5  heal=   0.0  dmg(68)
+    0.00s  AA            dmg=  188.0  heal=  67.7  vital(102.4)
+    0.14s  Q             dmg=  204.4  heal=  68.1  AA-reset, vital(102.4)
+    0.39s  AA            dmg=  188.0  heal=  67.7  vital(102.4)
+    0.53s  W             dmg=  181.0  heal=  65.6  vital(102.4)
+    1.42s  AA            dmg=   85.6  heal=   2.1  
+    2.44s  AA            dmg=   85.6  heal=   9.0  
+    2.58s  E_ACTIVATE    dmg=    0.0  heal=   0.0  instant, AA-reset
+    2.58s  E_FIRST       dmg=   98.5  heal=  10.3  E-first
+    3.30s  E_CRIT        dmg=  287.0  heal=  92.7  E-crit, vital(119.5)
+    4.02s  AA            dmg=   98.5  heal=  10.3  
+    5.04s  AA            dmg=   98.5  heal=  10.3  
+    6.07s  AA            dmg=  218.0  heal=  85.5  vital(119.5)
+    7.09s  AA            dmg=   98.5  heal=  10.3  
+    8.11s  AA            dmg=   98.5  heal=  10.3  
+    8.46s  Q             dmg=  235.7  heal=  87.4  AA-reset, vital(119.5)
+    8.71s  AA            dmg=   98.5  heal=  10.3  
+    9.73s  AA            dmg=   98.5  heal=  10.3  
