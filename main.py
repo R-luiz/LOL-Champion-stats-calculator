@@ -1,7 +1,11 @@
 """Damage calculation demo for the LoL Champion Simulator."""
 
-from lol_champions import Fiora, Target, calculate_damage
+from lol_champions import Fiora, Target, calculate_damage, optimize_dps, optimize_build
 from lol_champions.runes import PressTheAttack, Conqueror, HailOfBlades, GraspOfTheUndying
+from lol_champions.items import (
+    TrinityForce, BladeOfTheRuinedKing, WitsEnd, KrakenSlayer,
+    SpearOfShojin, SunderedSky, LiandrysTorment,
+)
 
 
 def fmt(result: dict) -> str:
@@ -144,6 +148,94 @@ def main():
     print(f"  {enemy_target}")
     q_vs_enemy = calculate_damage(fiora.Q(), enemy_target, champion=fiora)
     print(f"  Q damage: {fmt(q_vs_enemy)}")
+
+    # ═══════════════════════════════════════════════════════════════════
+    # ITEM DAMAGE PROCS
+    # ═══════════════════════════════════════════════════════════════════
+    print("\n" + "=" * 70)
+    print("ITEM DAMAGE PROCS (vs 80 AR / 50 MR / 2000 HP target)")
+    print("=" * 70)
+
+    # Trinity Force Spellblade
+    trinity = TrinityForce()
+    proc = trinity.proc_damage(champion=fiora, target=target)
+    result = calculate_damage(proc, target, champion=fiora)
+    print(f"  Trinity Spellblade:  {fmt(result)}")
+
+    # BotRK on-hit (9% current HP)
+    botrk = BladeOfTheRuinedKing()
+    proc = botrk.proc_damage(champion=fiora, target=target)
+    result = calculate_damage(proc, target, champion=fiora)
+    print(f"  BotRK on-hit:        {fmt(result)}")
+
+    # Wit's End on-hit
+    wits = WitsEnd()
+    proc = wits.proc_damage(champion=fiora, target=target)
+    result = calculate_damage(proc, target, champion=fiora)
+    print(f"  Wit's End on-hit:    {fmt(result)}")
+
+    # Kraken Slayer proc
+    kraken = KrakenSlayer()
+    proc = kraken.proc_damage(champion=fiora, target=target)
+    result = calculate_damage(proc, target, champion=fiora)
+    print(f"  Kraken Slayer 3rd:   {fmt(result)}")
+
+    # Sundered Sky proc
+    sky = SunderedSky()
+    proc = sky.proc_damage(champion=fiora, target=target)
+    result = calculate_damage(proc, target, champion=fiora)
+    print(f"  Sundered Sky crit:   {fmt(result)}")
+
+    # Liandry's burn (total over 3s)
+    liandry = LiandrysTorment()
+    burn = liandry.burn_damage(target=target)
+    result = calculate_damage(burn, target, champion=fiora)
+    print(f"  Liandry's burn (3s): {fmt(result)}")
+
+    # ═══════════════════════════════════════════════════════════════════
+    # DPS WITH ITEMS (Trinity + BotRK + Shojin, 5s)
+    # ═══════════════════════════════════════════════════════════════════
+    print("\n" + "=" * 70)
+    print("DPS OPTIMIZER: Fiora Lv9 with Trinity + BotRK + Shojin (5s)")
+    print("=" * 70)
+    items_list = [TrinityForce(), BladeOfTheRuinedKing(), SpearOfShojin()]
+    # Add item stats: Trinity (35 AD, 33% AS) + BotRK (40 AD, 25% AS)
+    fiora.add_stats(bonus_AD=35 + 40, bonus_HP=300, bonus_AS=33 + 25)
+    dps_result = optimize_dps(
+        champion=fiora, target=target, time_limit=5.0,
+        rune=PressTheAttack(), items=items_list,
+    )
+    print(f"  Total damage: {dps_result['total_damage']}")
+    print(f"  DPS:          {dps_result['dps']}")
+    print(f"  Healing:      {dps_result['total_healing']}")
+    seq = dps_result['sequence']
+    if len(seq) > 60:
+        seq = seq[:57] + "..."
+    print(f"  Sequence:     {seq}")
+    # Undo item stats
+    fiora.add_stats(bonus_AD=-(35 + 40), bonus_HP=-300, bonus_AS=-(33 + 25))
+
+    # ═══════════════════════════════════════════════════════════════════
+    # BUILD OPTIMIZER: Best 2-item build (exhaustive, fast demo)
+    # ═══════════════════════════════════════════════════════════════════
+    print("\n" + "=" * 70)
+    print("BUILD OPTIMIZER: Best 2-item build for Fiora Lv9 (5s, vs 80 AR)")
+    print("=" * 70)
+    ad_pool = [
+        "Trinity Force", "Blade of the Ruined King", "Spear of Shojin",
+        "Kraken Slayer", "Wit's End", "Stridebreaker", "Sundered Sky",
+        "Voltaic Cyclosword", "Profane Hydra", "Ravenous Hydra",
+        "Titanic Hydra", "Lord Dominik's Regards", "Terminus",
+    ]
+    builds = optimize_build(
+        champion=fiora, target=target, time_limit=5.0,
+        item_count=2, rune=PressTheAttack(),
+        pool=ad_pool, top_n=5,
+    )
+    for i, b in enumerate(builds, 1):
+        names = " + ".join(b["items"])
+        print(f"  #{i}: {names}  —  {b['dps']} DPS  "
+              f"({b['total_damage']} dmg, {b['total_healing']} heal)")
 
     print("\n" + "=" * 70)
     print("Done!")

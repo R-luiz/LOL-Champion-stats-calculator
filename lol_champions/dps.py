@@ -21,10 +21,7 @@ from dataclasses import dataclass, field
 from typing import List, Dict, Any, Tuple
 
 from .damage import calculate_damage
-
-
-# Actions that count as on-hit (trigger PtA stacks, Grasp proc)
-ON_HIT_ACTIONS = {"AA", "Q", "E_FIRST", "E_CRIT"}
+from .items import ON_HIT_ACTIONS, ABILITY_CAST_ACTIONS, ABILITY_DAMAGE_ACTIONS
 
 
 # ─── STATE ───
@@ -58,9 +55,34 @@ class DPSState:
     hob_stacks: int = 0
     hob_active_until: float = 0.0
     grasp_available: bool = True
-    # Item state
+    # Item state — Shojin
     shojin_stacks: int = 0
     shojin_max_stacks: int = 0  # 0 = no Shojin
+    # Item state — Spellblade
+    spellblade_armed: bool = False
+    spellblade_cd_until: float = 0.0
+    has_spellblade: bool = False
+    # Item state — Energized
+    energized_stacks: int = 100  # start full (charged before fight)
+    energized_per_aa: int = 6
+    energized_max: int = 100
+    has_energized: bool = False
+    # Item state — Kraken Slayer
+    kraken_hits: int = 0
+    has_kraken: bool = False
+    # Item state — Conditional
+    sundered_sky_cd_until: float = 0.0
+    has_sundered_sky: bool = False
+    dead_mans_available: bool = True  # consumed on first hit
+    has_dead_mans: bool = False
+    # Item state — Active items
+    hydra_active_cd_until: float = 0.0
+    has_hydra_active: bool = False
+    stridebreaker_cd_until: float = 0.0
+    has_stridebreaker: bool = False
+    # Item state — BotRK (dynamic HP tracking)
+    has_botrk: bool = False
+    target_current_hp: float = 0.0  # tracks target HP as damage is dealt
     # Accumulated results
     damage_so_far: float = 0.0
     healing_so_far: float = 0.0
@@ -107,6 +129,32 @@ class DamageTable:
     static_amp_multiplier: float = 1.0
     # Shojin per-stack amp (applied dynamically per-action)
     shojin_amp_per_stack: float = 0.0
+    # On-hit item bonus (sum of all simple on-hit procs, pre-mitigated)
+    on_hit_physical: float = 0.0
+    on_hit_magic: float = 0.0
+    # BotRK: computed dynamically from target current HP each hit
+    botrk_pct: float = 0.0           # e.g. 0.09 for melee
+    botrk_phys_ratio: float = 0.0    # mitigation_ratio * static_amp (multiply by current_hp * pct)
+    # Spellblade damage (pre-mitigated)
+    spellblade_damage: float = 0.0
+    spellblade_cd: float = 1.5
+    # Energized damage (sum of all energized items, pre-mitigated)
+    energized_damage: float = 0.0
+    # Kraken Slayer proc (pre-mitigated)
+    kraken_proc: float = 0.0
+    # Burn damage per ability hit (Liandry's, pre-mitigated)
+    liandry_burn: float = 0.0
+    # Immolate DPS (Sunfire / Hollow Radiance, raw magic DPS)
+    immolate_dps: float = 0.0
+    # Conditional item procs (pre-mitigated)
+    sundered_sky_bonus: float = 0.0
+    sundered_sky_cd: float = 10.0
+    dead_mans_bonus: float = 0.0
+    # Active item damage (pre-mitigated)
+    hydra_active_damage: float = 0.0
+    hydra_active_cd: float = 10.0
+    stridebreaker_damage: float = 0.0
+    stridebreaker_cd: float = 15.0
 
 
 def build_damage_table(
@@ -139,6 +187,90 @@ def build_damage_table(
     # Helper to apply static multiplier
     def _amp(val: float) -> float:
         return round(val * static_mult, 2)
+
+    # Helper to mitigate an item proc
+    def _mitigate(proc_dict):
+        return calculate_damage(proc_dict, target, champion=champion)["total_damage"]
+
+    # ─── Item proc detection ───
+    if items:
+        from .items import (
+            BladeOfTheRuinedKing, WitsEnd, NashorsTooth, RecurveBow,
+            Terminus, TitanicHydra, KrakenSlayer,
+            TrinityForce, IcebornGauntlet, LichBane,
+            VoltaicCyclosword, RapidFirecannon, StatikkShiv, Stormrazor,
+            LiandrysTorment, SunfireAegis, HollowRadiance,
+            SunderedSky, DeadMansPlate,
+            Stridebreaker, ProfaneHydra, RavenousHydra, HextechRocketbelt,
+            Everfrost, HextechGunblade,
+        )
+        for item in items:
+            # BotRK — dynamic: store % and mitigation ratio, NOT flat damage
+            if isinstance(item, BladeOfTheRuinedKing):
+                pct = item.melee_pct if getattr(champion, 'is_melee', True) else item.ranged_pct
+                table.botrk_pct = pct
+                # Compute mitigation ratio: post_mitigation / raw for physical
+                test_raw = 100.0
+                test_result = calculate_damage(
+                    {"raw_damage": test_raw, "damage_type": "physical"},
+                    target, champion=champion,
+                )
+                ratio = test_result["total_damage"] / test_raw if test_raw > 0 else 0
+                table.botrk_phys_ratio = round(ratio * static_mult, 6)
+            # Other on-hit items (flat damage, pre-mitigated)
+            elif isinstance(item, RecurveBow):
+                proc = item.proc_damage(champion, target)
+                val = _amp(_mitigate(proc))
+                table.on_hit_physical += val
+            elif isinstance(item, (WitsEnd, NashorsTooth, Terminus)):
+                proc = item.proc_damage(champion, target)
+                val = _amp(_mitigate(proc))
+                table.on_hit_magic += val
+            elif isinstance(item, TitanicHydra):
+                proc = item.proc_damage(champion, target)
+                val = _amp(_mitigate(proc))
+                table.on_hit_physical += val
+                # Active damage
+                act = item.active_damage(champion, target)
+                table.hydra_active_damage = _amp(_mitigate(act))
+                table.hydra_active_cd = item.active_cooldown
+            # Stacking on-hit (Kraken)
+            elif isinstance(item, KrakenSlayer):
+                proc = item.proc_damage(champion, target)
+                table.kraken_proc = _amp(_mitigate(proc))
+            # Spellblade (unique — last one wins)
+            elif isinstance(item, (TrinityForce, IcebornGauntlet, LichBane)):
+                proc = item.proc_damage(champion, target)
+                table.spellblade_damage = _amp(_mitigate(proc))
+                table.spellblade_cd = item.cooldown
+            # Energized (stack additively)
+            elif isinstance(item, (VoltaicCyclosword, RapidFirecannon,
+                                   StatikkShiv, Stormrazor)):
+                proc = item.proc_damage(champion, target)
+                table.energized_damage += _amp(_mitigate(proc))
+            # Burn / Immolate
+            elif isinstance(item, LiandrysTorment):
+                burn = item.burn_damage(target)
+                table.liandry_burn = _amp(_mitigate(burn))
+            elif isinstance(item, (SunfireAegis, HollowRadiance)):
+                table.immolate_dps += item.dps(champion)
+            # Conditional
+            elif isinstance(item, SunderedSky):
+                proc = item.proc_damage(champion, target)
+                table.sundered_sky_bonus = _amp(_mitigate(proc))
+                table.sundered_sky_cd = item.cooldown
+            elif isinstance(item, DeadMansPlate):
+                proc = item.proc_damage(champion, target)
+                table.dead_mans_bonus = _amp(_mitigate(proc))
+            # Active items (non-Hydra)
+            elif isinstance(item, Stridebreaker):
+                proc = item.proc_damage(champion, target)
+                table.stridebreaker_damage = _amp(_mitigate(proc))
+                table.stridebreaker_cd = item.cooldown
+            elif isinstance(item, (ProfaneHydra, RavenousHydra)):
+                proc = item.proc_damage(champion, target)
+                table.hydra_active_damage = _amp(_mitigate(proc))
+                table.hydra_active_cd = item.cooldown
 
     # Base damages (with static amp baked in)
     aa_data = champion.auto_attack()
@@ -320,6 +452,12 @@ def _available_actions(state: DPSState, table: DamageTable, time_limit: float) -
     if table.r_cd < float('inf') and state.r_cd_until <= t and state.r_vitals_remaining == 0:
         actions.append("R_ACTIVATE")
 
+    # Active items
+    if state.has_hydra_active and state.hydra_active_cd_until <= t:
+        actions.append("HYDRA_ACTIVE")
+    if state.has_stridebreaker and state.stridebreaker_cd_until <= t:
+        actions.append("STRIDEBREAKER")
+
     if not actions:
         actions.append("WAIT")
     elif state.next_vital_at > t and state.next_vital_at < time_limit:
@@ -388,6 +526,9 @@ def _apply_action(
         s.r_cd_until = t + table.r_cd
         # R vitals appear 0.5s after cast; overrides normal vital timer
         s.next_vital_at = t + champion.R_VITAL_APPEAR_DELAY
+        # Arm spellblade (R is an ability cast)
+        if s.has_spellblade and s.spellblade_cd_until <= t:
+            s.spellblade_armed = True
         s.actions.append((t, "R_ACTIVATE", 0.0, ["instant", "4-vitals"], 0.0))
         return s
 
@@ -398,7 +539,44 @@ def _apply_action(
         s.e_autos_remaining = 2
         s.e_expires_at = t + 4.0
         s.e_cd_until = t + table.e_cd
+        # Arm spellblade (E is an ability cast)
+        if s.has_spellblade and s.spellblade_cd_until <= t:
+            s.spellblade_armed = True
         s.actions.append((t, "E_ACTIVATE", 0.0, ["instant", "AA-reset"], 0.0))
+        return s
+
+    # ─── HYDRA_ACTIVE (instant, damages, resets AA timer) ───
+    if action == "HYDRA_ACTIVE":
+        heal_before = s.healing_so_far
+        damage = table.hydra_active_damage
+        s.ability_lock_until = t
+        s.next_aa_at = t  # AA reset
+        s.hydra_active_cd_until = t + table.hydra_active_cd
+        s.damage_so_far += damage
+        action_heal = 0.0
+        # Omnivamp applies
+        ov = getattr(champion, 'omnivamp', 0.0)
+        if ov > 0 and damage > 0:
+            action_heal = round(damage * ov, 2)
+            s.healing_so_far += action_heal
+        s.actions.append((t, "HYDRA_ACTIVE", round(damage, 2),
+                          [f"AA-reset", f"dmg({round(damage, 0):.0f})"], action_heal))
+        return s
+
+    # ─── STRIDEBREAKER (instant, damages) ───
+    if action == "STRIDEBREAKER":
+        heal_before = s.healing_so_far
+        damage = table.stridebreaker_damage
+        s.ability_lock_until = t
+        s.stridebreaker_cd_until = t + table.stridebreaker_cd
+        s.damage_so_far += damage
+        action_heal = 0.0
+        ov = getattr(champion, 'omnivamp', 0.0)
+        if ov > 0 and damage > 0:
+            action_heal = round(damage * ov, 2)
+            s.healing_so_far += action_heal
+        s.actions.append((t, "STRIDEBREAKER", round(damage, 2),
+                          [f"dmg({round(damage, 0):.0f})"], action_heal))
         return s
 
     # ─── DAMAGING ACTIONS ───
@@ -452,6 +630,69 @@ def _apply_action(
         damage = _get_action_damage("W", table, s, rune)
         s.ability_lock_until = t + champion.W_CAST_TIME
         s.w_cd_until = t + table.w_cd
+
+    # ─── ITEM PROCS ───
+
+    # BotRK on-hit: dynamic damage based on target current HP
+    botrk_dmg = 0.0
+    if s.has_botrk and is_on_hit and table.botrk_pct > 0:
+        botrk_dmg = s.target_current_hp * table.botrk_pct * table.botrk_phys_ratio
+        damage += botrk_dmg
+        notes.append(f"BotRK({round(botrk_dmg, 0):.0f})")
+
+    # On-hit bonus (Wit's End, Nashor's, Recurve, Terminus, Titanic passive)
+    if is_on_hit and (table.on_hit_physical > 0 or table.on_hit_magic > 0):
+        damage += table.on_hit_physical + table.on_hit_magic
+        if table.on_hit_physical > 0:
+            notes.append(f"on-hit-P({round(table.on_hit_physical, 0):.0f})")
+        if table.on_hit_magic > 0:
+            notes.append(f"on-hit-M({round(table.on_hit_magic, 0):.0f})")
+
+    # Spellblade (Trinity Force / Iceborn / Lich Bane)
+    if s.has_spellblade:
+        # Arm on ability cast (Q also arms since it's an ability cast)
+        if action in ABILITY_CAST_ACTIONS and s.spellblade_cd_until <= t:
+            s.spellblade_armed = True
+        # Proc on on-hit action (Q both arms AND procs in same action)
+        if is_on_hit and s.spellblade_armed:
+            damage += table.spellblade_damage
+            s.spellblade_armed = False
+            s.spellblade_cd_until = hit_time + table.spellblade_cd
+            notes.append(f"Spellblade({round(table.spellblade_damage, 0):.0f})")
+
+    # Energized (Voltaic / RFC / Shiv / Stormrazor)
+    if s.has_energized and is_on_hit:
+        if s.energized_stacks >= s.energized_max:
+            damage += table.energized_damage
+            s.energized_stacks = 0
+            notes.append(f"Energized({round(table.energized_damage, 0):.0f})")
+        s.energized_stacks = min(s.energized_stacks + s.energized_per_aa,
+                                 s.energized_max)
+
+    # Kraken Slayer (every 3rd hit)
+    if s.has_kraken and is_on_hit:
+        s.kraken_hits += 1
+        if s.kraken_hits >= 3:
+            damage += table.kraken_proc
+            s.kraken_hits = 0
+            notes.append(f"Kraken({round(table.kraken_proc, 0):.0f})")
+
+    # Sundered Sky (first on-hit per 10s CD)
+    if s.has_sundered_sky and is_on_hit and s.sundered_sky_cd_until <= t:
+        damage += table.sundered_sky_bonus
+        s.sundered_sky_cd_until = hit_time + table.sundered_sky_cd
+        notes.append(f"SunderedSky({round(table.sundered_sky_bonus, 0):.0f})")
+
+    # Dead Man's Plate (first hit only, full momentum)
+    if s.has_dead_mans and is_on_hit and s.dead_mans_available:
+        damage += table.dead_mans_bonus
+        s.dead_mans_available = False
+        notes.append(f"DeadMans({round(table.dead_mans_bonus, 0):.0f})")
+
+    # Liandry's burn (on ability damage actions, not basic AA)
+    if table.liandry_burn > 0 and action in ABILITY_DAMAGE_ACTIONS:
+        damage += table.liandry_burn
+        notes.append(f"Burn({round(table.liandry_burn, 0):.0f})")
 
     # ─── VITAL PROC (uses hit_time for when damage actually lands) ───
     vital_damage = 0.0
@@ -527,6 +768,11 @@ def _apply_action(
         s.healing_so_far += round(sustain_heal, 2)
 
     s.damage_so_far += total_action_damage
+
+    # Update target current HP for BotRK dynamic calculation
+    if s.has_botrk:
+        s.target_current_hp = max(s.target_current_hp - total_action_damage, 0.0)
+
     action_heal = round(s.healing_so_far - heal_before, 2)
     s.actions.append((t, action, round(total_action_damage, 2), notes, action_heal))
     return s
@@ -535,10 +781,17 @@ def _apply_action(
 # ─── SEARCH ───
 
 
-def _upper_bound_dps(table: DamageTable, champion, extra_as: float = 0.0) -> float:
+def _upper_bound_dps(table: DamageTable, champion, extra_as: float = 0.0,
+                     target_max_hp: float = 0.0) -> float:
     """Loose upper bound on DPS for pruning."""
     min_interval = champion.attack_interval(extra_bonus_as_pct=extra_as)
+    # Include on-hit item damage in AA upper bound
+    on_hit_bonus = table.on_hit_physical + table.on_hit_magic
+    # BotRK upper bound: use max HP (generous, actual will decrease)
+    if table.botrk_pct > 0 and target_max_hp > 0:
+        on_hit_bonus += target_max_hp * table.botrk_pct * table.botrk_phys_ratio
     best_aa = max(table.aa, table.aa_conq, table.aa_pta, table.e_crit, table.e_crit_pta, table.e_crit_conq)
+    best_aa += on_hit_bonus + table.spellblade_damage  # generous upper bound
     aa_dps = best_aa / max(min_interval, 0.2)
 
     q_dps = 0.0
@@ -563,7 +816,8 @@ def _branch_and_bound(
     time_limit: float,
 ) -> DPSState:
     """DFS branch-and-bound search over action sequences."""
-    ub_dps = _upper_bound_dps(table, champion, extra_as=champion.bonus_AS)
+    ub_dps = _upper_bound_dps(table, champion, extra_as=champion.bonus_AS,
+                              target_max_hp=root.target_current_hp)
     best = root.copy()
     stack = [root]
     nodes_explored = 0
@@ -629,6 +883,10 @@ def _greedy_search(
                     score = (vital_dmg + vital_heal) - wait_duration * lost_dps
                 else:
                     continue  # no vital to wait for
+            elif action == "HYDRA_ACTIVE":
+                score = table.hydra_active_damage
+            elif action == "STRIDEBREAKER":
+                score = table.stridebreaker_damage
             elif action == "E_ACTIVATE":
                 score = table.e_crit * 2  # prioritize enabling crit
             elif action == "R_ACTIVATE":
@@ -725,13 +983,41 @@ def optimize_dps(
 
         root = DPSState()
 
-        # Init Shojin state
+        # Init item state from items list
+        # Always init target HP for BotRK tracking
+        root.target_current_hp = target.max_hp
+
         if items:
-            from .items import SpearOfShojin
+            from .items import (
+                SpearOfShojin, TrinityForce, IcebornGauntlet, LichBane,
+                VoltaicCyclosword, RapidFirecannon, StatikkShiv, Stormrazor,
+                KrakenSlayer, SunderedSky, DeadMansPlate,
+                TitanicHydra, ProfaneHydra, RavenousHydra, Stridebreaker,
+                BladeOfTheRuinedKing,
+            )
             for item in items:
-                if isinstance(item, SpearOfShojin):
+                if isinstance(item, BladeOfTheRuinedKing):
+                    root.has_botrk = True
+                elif isinstance(item, SpearOfShojin):
                     root.shojin_stacks = item.stacks
                     root.shojin_max_stacks = item.max_stacks
+                elif isinstance(item, (TrinityForce, IcebornGauntlet, LichBane)):
+                    root.has_spellblade = True
+                elif isinstance(item, (VoltaicCyclosword, RapidFirecannon,
+                                       StatikkShiv, Stormrazor)):
+                    root.has_energized = True
+                    root.energized_per_aa = item.stacks_per_aa
+                    root.energized_max = item.max_stacks
+                elif isinstance(item, KrakenSlayer):
+                    root.has_kraken = True
+                elif isinstance(item, SunderedSky):
+                    root.has_sundered_sky = True
+                elif isinstance(item, DeadMansPlate):
+                    root.has_dead_mans = True
+                elif isinstance(item, (TitanicHydra, ProfaneHydra, RavenousHydra)):
+                    root.has_hydra_active = True
+                elif isinstance(item, Stridebreaker):
+                    root.has_stridebreaker = True
 
         if r_active:
             # R was already activated: 4 vitals available immediately, R on cooldown
@@ -748,6 +1034,10 @@ def optimize_dps(
         else:
             result_state = _greedy_search(root, table, champion, rune, time_limit)
             method = "greedy"
+
+        # Immolate aura damage (Sunfire Aegis / Hollow Radiance)
+        if table.immolate_dps > 0:
+            result_state.damage_so_far += round(table.immolate_dps * time_limit, 2)
 
         # Passive health regeneration over the fight
         hp_regen = getattr(champion, 'health_regen_per_sec', 0.0)
