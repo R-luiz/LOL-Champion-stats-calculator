@@ -1,6 +1,6 @@
 # League of Legends Fiora Damage Calculator
 
-A Python CLI and library that calculates Fiora's exact post-mitigation damage against any target, including auto attacks, ability combos, keystone rune interactions, and time-based DPS optimization. All formulas and values sourced from the official [LoL Wiki](https://wiki.leagueoflegends.com/en-us/).
+A Python CLI and library that calculates Fiora's exact post-mitigation damage against any target, including auto attacks, ability combos, keystone rune interactions, sustain healing, and time-based DPS optimization. Includes a **live mode** that reads your in-game stats in real time via the Riot Live Client Data API. All formulas and values sourced from the official [LoL Wiki](https://wiki.leagueoflegends.com/en-us/). Pure Python, no external dependencies.
 
 ## Copilot / AI Assistant Prompt
 
@@ -34,9 +34,15 @@ python cli.py --level 9 --q 5 --bonus-ad 50 --target-armor 80
 
 # Full combo with rune
 python cli.py --combo "AA Q passive AA E AA" --level 9 --q 5 --e 1 --bonus-ad 50 --lethality 10 --target-armor 80 --rune pta
+
+# Live mode: real-time dashboard during a game
+python live.py --target Darius --time 5
+
+# Demo: see the live dashboard without a running game
+python demo_live.py
 ```
 
-Output is JSON, designed for easy parsing by Copilot, Claude, or any tool.
+Output from `cli.py` is JSON, designed for easy parsing by Copilot, Claude, or any tool. `live.py` outputs a refreshing terminal dashboard.
 
 ## CLI Reference
 
@@ -191,6 +197,103 @@ python cli.py --level 9 --q 5 --bonus-ad 50 --target-armor 80 --target-hp 800 --
 python cli.py --time 8 --level 14 --q 5 --e 5 --r 2 --bonus-ad 150 --target-armor 200 --target-hp 4000 --cut-down --rune conqueror
 ```
 
+## Live Mode (`live.py`)
+
+Real-time damage calculator that reads your Fiora's stats directly from the in-game client during a League of Legends match. No manual stat entry needed — it auto-detects your level, ability ranks, items, runes, and sustain stats every poll cycle.
+
+### How It Works
+
+1. Connects to the Riot Live Client Data API at `https://127.0.0.1:2999` (available while a game is running)
+2. Reads your champion stats, items, abilities, and runes via the `/activeplayer` and `/playerlist` endpoints
+3. Fetches enemy champion base stats from Riot's Data Dragon CDN to auto-estimate target armor/MR/HP
+4. Computes per-ability damage, per-ability healing, DPS optimizer results, and kill combo timing
+5. Refreshes the terminal dashboard every 2 seconds (configurable)
+
+### Live Mode Options
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--target` | first enemy | Enemy champion name to track (e.g. `Darius`) |
+| `--target-hp` | auto | Manual target HP override |
+| `--target-armor` | auto | Manual target armor override |
+| `--target-mr` | auto | Manual target MR override |
+| `--interval` | 2 | Poll interval in seconds |
+| `--time` | -- | Include DPS optimizer with this time window (e.g. `5`) |
+
+### Usage Examples
+
+```bash
+# Auto-detect everything, default target (first enemy)
+python live.py
+
+# Track a specific enemy, include 5s DPS optimizer
+python live.py --target Darius --time 5
+
+# Manual target stats override
+python live.py --target-armor 120 --target-hp 3000
+
+# Mix auto-estimation with manual overrides
+python live.py --target Darius --target-armor 150
+
+# Faster refresh rate
+python live.py --interval 1 --time 5
+```
+
+### Target HP Calibration
+
+On first detecting an enemy champion, live mode prompts you to enter their actual max HP (visible by clicking them in-game). It compares this to its base+items estimate to deduce which rune stat shards they're running (flat +65 HP, scaling +10-180, both, or none), then scales the shard HP correctly as they level up throughout the game. If you skip the prompt, it defaults to a common shard combo (scaling + flat 65).
+
+### Dashboard Display
+
+The live dashboard shows:
+
+- **Champion info**: level, ability ranks, total AD, attack speed
+- **Runes**: auto-detected keystone and minor runes
+- **HP**: current / max with percentage
+- **Sustain**: life steal %, omnivamp %, health regen/s (from items)
+- **Items**: current item build
+- **Target**: enemy name, level, shard estimation, armor/MR/HP
+- **Per-ability damage**: each ability's post-mitigation damage as raw number and % of target HP
+- **Per-ability healing**: sustain healing from each ability (life steal on AA/Q/E, omnivamp on all)
+- **PtA variants**: damage and healing with PtA 8% exposure applied (shown in brackets)
+- **DPS optimizer**: optimal rotation, total damage, DPS, total healing (if `--time` is set)
+- **Kill combo**: fastest sequence to kill the target from full HP, with hit count and total healing
+
+### Sustain Tracking
+
+Live mode reads three sustain stats from the API and integrates them into all calculations:
+
+- **Life Steal** (`lifeSteal`): heals on on-hit physical damage (AA, Q, E). Does NOT heal from W
+- **Omnivamp** (`spellVamp` in the API): heals on ALL post-mitigation damage (physical, magic, true) at full effectiveness for single-target abilities
+- **Health Regen** (`healthRegenRate`): passive HP/sec, applied as `rate * duration` in the DPS optimizer
+
+Per-ability healing is shown next to each ability's damage:
+- With PtA: `heal: (normal / with_pta)` — both values shown
+- Without PtA: `heal: value`
+- Vital: includes the flat passive heal + omnivamp on the true damage
+
+The DPS optimizer and kill combo also track total healing across the full sequence.
+
+### Data Dragon Integration
+
+Live mode uses Riot's Data Dragon CDN (`ddragon.leagueoflegends.com`) to fetch:
+
+- **Enemy champion base stats**: HP, armor, MR at any level using the LoL scaling formula
+- **Item stats**: HP, armor, MR, AD, AP, attack speed from item IDs on the scoreboard
+- **Target estimation**: combines champion base stats + item bonuses + calibrated shard HP
+
+Data is cached locally at `~/.cache/lol_data/<version>/` so subsequent launches are instant. The game version is auto-detected.
+
+## Demo Script (`demo_live.py`)
+
+Simulates the live dashboard without a running game, useful for testing or previewing the display.
+
+```bash
+python demo_live.py
+```
+
+The demo sets up a level 14 Fiora with Doran's Blade, Ravenous Hydra, and Endless Hunger against a Darius target (2800 HP, 152 armor, 58 MR) with Press the Attack and Last Stand.
+
 ## How Runes Work
 
 Rune interactions are fully tracked in both combo and DPS modes.
@@ -303,6 +406,53 @@ dps = optimize_dps(
 print(dps["total_damage"])     # optimal total damage
 print(dps["dps"])              # damage per second
 print(dps["sequence"])         # optimal action sequence
+print(dps["total_healing"])    # total healing (sustain + vitals + rune)
+
+# Sustain stats: life steal, omnivamp, health regen
+fiora.add_stats(life_steal=0.10, omnivamp=0.05, health_regen_per_sec=8.5)
+# Or set directly (e.g. from API total values):
+fiora.life_steal = 0.10         # 10% life steal
+fiora.omnivamp = 0.085          # 8.5% omnivamp
+fiora.health_regen_per_sec = 14.2
+# Sustain is integrated into the DPS optimizer automatically
+```
+
+### Live Client API
+
+```python
+from lol_champions.live_client import is_game_active, get_active_player, get_player_list
+from lol_champions.data_dragon import DataDragon
+
+# Check if a game is running
+if is_game_active():
+    player = get_active_player()    # your stats, abilities, runes
+    players = get_player_list()     # all 10 players' scoreboard data
+
+# Fetch enemy base stats from Data Dragon
+dd = DataDragon()                            # auto-detects game version
+stats = dd.champion_stats_at_level("Darius", 14)  # {"hp", "armor", "mr", "ad"}
+target = dd.estimate_target("Darius", 14, [3071, 3143])  # base + item bonuses
+```
+
+## Project Structure
+
+```
+cli.py                          # JSON CLI for manual stat input
+live.py                         # Real-time dashboard (Live Client Data API)
+demo_live.py                    # Demo script (simulated live display)
+main.py                         # Quick demo script
+
+lol_champions/
+  champion.py                   # Base Champion class (stats, scaling, sustain)
+  fiora.py                      # Fiora subclass (abilities, passives, timing)
+  ability.py                    # Ability dataclass
+  target.py                     # Target dataclass
+  damage.py                     # Damage engine (penetration, mitigation, modifiers)
+  dps.py                        # DPS optimizer (branch-and-bound / greedy)
+  runes.py                      # Keystones + minor runes
+  items.py                      # Item passives (Spear of Shojin)
+  live_client.py                # Riot Live Client Data API client
+  data_dragon.py                # Data Dragon CDN fetcher + cache
 ```
 
 ## Data Source

@@ -134,6 +134,11 @@ def _build_fiora_from_api(player_data: dict) -> tuple:
         magic_pen_pct=magic_pen_pct,
     )
 
+    # Sustain stats (API gives total current values)
+    fiora.life_steal = stats.get("lifeSteal", 0.0)
+    fiora.omnivamp = stats.get("spellVamp", 0.0)   # spellVamp = omnivamp in modern LoL
+    fiora.health_regen_per_sec = stats.get("healthRegenRate", 0.0)
+
     current_hp = stats.get("currentHealth", stats["maxHealth"])
     max_hp = stats["maxHealth"]
 
@@ -322,10 +327,22 @@ def _build_modifiers(fiora, target, minor_runes: set,
     return mods
 
 
+def _sustain_heal(dmg: float, is_on_hit: bool, ls: float, ov: float) -> float:
+    """Compute sustain healing for a single ability hit."""
+    heal = 0.0
+    if is_on_hit and ls > 0:
+        heal += dmg * ls
+    if ov > 0:
+        heal += dmg * ov
+    return round(heal, 1)
+
+
 def _compute_damage(fiora, target, mods, items_list, has_shojin,
                      keystone_name=None, keystone=None):
     """Compute single-ability damages. Returns dict of results."""
     results = {}
+    ls = fiora.life_steal
+    ov = fiora.omnivamp
 
     # Shojin static amp for single-ability mode
     shojin_mod = None
@@ -339,59 +356,70 @@ def _compute_damage(fiora, target, mods, items_list, has_shojin,
     if keystone_name == "pta" and keystone:
         pta_mod = {"name": "PtA Exposure", "amp": 0.08}
 
-    # Q
+    # Q (on-hit: LS + OV)
     q_data = fiora.Q()
     if "error" not in q_data:
         q_mods = mods + ([shojin_mod] if shojin_mod else [])
         q_dmg = calculate_damage(q_data, target, champion=fiora, damage_modifiers=q_mods)
         results["Q"] = (q_dmg["total_damage"], "physical")
+        results["Q_heal"] = _sustain_heal(q_dmg["total_damage"], True, ls, ov)
         if pta_mod:
             q_amped = calculate_damage(q_data, target, champion=fiora,
                                        damage_modifiers=q_mods + [pta_mod])
             results["Q+pta"] = (q_amped["total_damage"], "physical")
+            results["Q_heal_pta"] = _sustain_heal(q_amped["total_damage"], True, ls, ov)
 
-    # W
+    # W (NOT on-hit: OV only)
     w_data = fiora.W()
     if "error" not in w_data:
         w_mods = mods + ([shojin_mod] if shojin_mod else [])
         w_dmg = calculate_damage(w_data, target, champion=fiora, damage_modifiers=w_mods)
         results["W"] = (w_dmg["total_damage"], "magic")
+        results["W_heal"] = _sustain_heal(w_dmg["total_damage"], False, ls, ov)
         if pta_mod:
             w_amped = calculate_damage(w_data, target, champion=fiora,
                                        damage_modifiers=w_mods + [pta_mod])
             results["W+pta"] = (w_amped["total_damage"], "magic")
+            results["W_heal_pta"] = _sustain_heal(w_amped["total_damage"], False, ls, ov)
 
-    # E (crit)
+    # E (crit, on-hit: LS + OV)
     e_data = fiora.E()
     if "error" not in e_data:
         e_mods = mods + ([shojin_mod] if shojin_mod else [])
         e_dmg = calculate_damage(e_data, target, champion=fiora, damage_modifiers=e_mods)
         results["E crit"] = (e_dmg["total_damage"], "physical")
+        results["E crit_heal"] = _sustain_heal(e_dmg["total_damage"], True, ls, ov)
         if pta_mod:
             e_amped = calculate_damage(e_data, target, champion=fiora,
                                        damage_modifiers=e_mods + [pta_mod])
             results["E crit+pta"] = (e_amped["total_damage"], "physical")
+            results["E crit_heal_pta"] = _sustain_heal(e_amped["total_damage"], True, ls, ov)
 
-    # Passive (vital)
+    # Passive (vital): flat heal + OV on true damage
     passive_mods = mods + ([shojin_mod] if shojin_mod else [])
     passive_data = fiora.passive(target_max_hp=target.max_hp)
     passive_dmg = calculate_damage(passive_data, target, champion=fiora,
                                    damage_modifiers=passive_mods)
     results["Vital"] = (passive_dmg["total_damage"], "true")
-    results["_vital_heal"] = passive_data["heal"]
+    vital_flat_heal = passive_data["heal"]
+    results["_vital_heal"] = vital_flat_heal
+    results["Vital_heal"] = round(vital_flat_heal + passive_dmg["total_damage"] * ov, 1)
     if pta_mod:
         vital_amped = calculate_damage(passive_data, target, champion=fiora,
                                        damage_modifiers=passive_mods + [pta_mod])
         results["Vital+pta"] = (vital_amped["total_damage"], "true")
+        results["Vital_heal_pta"] = round(vital_flat_heal + vital_amped["total_damage"] * ov, 1)
 
-    # AA
+    # AA (on-hit: LS + OV)
     aa_data = fiora.auto_attack()
     aa_dmg = calculate_damage(aa_data, target, champion=fiora, damage_modifiers=mods)
     results["AA"] = (aa_dmg["total_damage"], "physical")
+    results["AA_heal"] = _sustain_heal(aa_dmg["total_damage"], True, ls, ov)
     if pta_mod:
         aa_amped = calculate_damage(aa_data, target, champion=fiora,
                                     damage_modifiers=mods + [pta_mod])
         results["AA+pta"] = (aa_amped["total_damage"], "physical")
+        results["AA_heal_pta"] = _sustain_heal(aa_amped["total_damage"], True, ls, ov)
 
     # PTA proc damage
     if keystone_name == "pta" and keystone:
@@ -444,6 +472,17 @@ def _display(fiora, target, target_label, keystone_name, minor_runes,
     # HP
     print(f"  HP: {current_hp:.0f}/{max_hp:.0f} ({hp_pct:.0f}%)")
 
+    # Sustain
+    sustain_parts = []
+    if fiora.life_steal > 0:
+        sustain_parts.append(f"LS: {fiora.life_steal * 100:.0f}%")
+    if fiora.omnivamp > 0:
+        sustain_parts.append(f"OV: {fiora.omnivamp * 100:.0f}%")
+    if fiora.health_regen_per_sec > 0:
+        sustain_parts.append(f"Regen: {fiora.health_regen_per_sec:.1f}/s")
+    if sustain_parts:
+        print(f"  Sustain: {', '.join(sustain_parts)}")
+
     # Items
     if item_names:
         items_str = ", ".join(item_names[:6])
@@ -459,6 +498,7 @@ def _display(fiora, target, target_label, keystone_name, minor_runes,
     # Damage values
     t_hp = target.max_hp if target.max_hp > 0 else 1
     has_pta = "PtA proc" in damages
+    has_sustain = fiora.life_steal > 0 or fiora.omnivamp > 0
     for name in ("Q", "E crit", "Vital", "AA", "W"):
         if name in damages:
             dmg, dtype = damages[name]
@@ -471,10 +511,19 @@ def _display(fiora, target, target_label, keystone_name, minor_runes,
                 amped, _ = damages[pta_key]
                 pta_pct = amped / t_hp * 100
                 pta_str = f"  \033[31m[PtA: {amped:>7.1f} ({pta_pct:>5.1f}%)]\033[0m"
-            print(f"  {name:<10} {color}{dmg:>8.1f}  ({pct:>5.1f}%){reset}{pta_str}")
-
-    if "_vital_heal" in damages:
-        print(f"  {'Vital heal':<10} {damages['_vital_heal']:>8.1f}")
+            # Healing info
+            heal_key = name + "_heal"
+            heal_str = ""
+            if heal_key in damages:
+                h = damages[heal_key]
+                if h > 0 or has_sustain:
+                    pta_heal_key = heal_key + "_pta"
+                    if has_pta and pta_heal_key in damages:
+                        hp = damages[pta_heal_key]
+                        heal_str = f"  \033[32mheal: ({h:.0f} / {hp:.0f})\033[0m"
+                    else:
+                        heal_str = f"  \033[32mheal: {h:.0f}\033[0m"
+            print(f"  {name:<10} {color}{dmg:>8.1f}  ({pct:>5.1f}%){reset}{heal_str}{pta_str}")
 
     if has_pta:
         proc_dmg, _ = damages["PtA proc"]
@@ -488,6 +537,9 @@ def _display(fiora, target, target_label, keystone_name, minor_runes,
         dps = dps_result.get("dps", 0)
         seq = dps_result.get("sequence", "")
         print(f"  {dps_result.get('time_limit', '?')}s DPS: {dps:.0f} | Total: {total:.0f}")
+        healing = dps_result.get("total_healing", 0)
+        if healing > 0:
+            print(f"  Healing: {healing:.0f}")
         if seq:
             # Truncate long sequences
             if len(seq) > 48:
@@ -507,7 +559,9 @@ def _display(fiora, target, target_label, keystone_name, minor_runes,
         seq = " ".join(short_actions)
         hits = sum(1 for a in kill_result["actions"]
                    if a not in ("E_ACTIVATE", "R_ACTIVATE", "WAIT"))
-        print(f"  \033[1;32mKILL in {kt:.2f}s ({hits} hits)\033[0m")
+        kill_heal = kill_result.get("healing", 0)
+        heal_part = f" | heal: {kill_heal:.0f}" if kill_heal > 0 else ""
+        print(f"  \033[1;32mKILL in {kt:.2f}s ({hits} hits){heal_part}\033[0m")
         print(f"  {seq}")
 
     print(f"\033[1m{'=' * 56}\033[0m")
@@ -662,11 +716,13 @@ def main():
                     )
                 timeline = full.get("timeline", [])
                 cumulative = 0.0
+                cumulative_heal = 0.0
                 kill_actions = []
                 kill_time = None
                 for step in timeline:
                     dmg = step.get("damage", 0)
                     cumulative += dmg
+                    cumulative_heal += step.get("healing", 0)
                     kill_actions.append(step["action"])
                     if cumulative >= target.max_hp:
                         kill_time = step["time"]
@@ -676,6 +732,7 @@ def main():
                         "time": kill_time,
                         "actions": kill_actions,
                         "damage": round(cumulative, 1),
+                        "healing": round(cumulative_heal, 1),
                     }
             except Exception:
                 pass

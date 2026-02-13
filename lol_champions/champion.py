@@ -58,6 +58,10 @@ class Champion:
     AS_cap: float = 2.5
     # Champion type
     is_melee: bool = True
+    # Sustain stats
+    life_steal: float = 0.0            # decimal (0.08 = 8%)
+    omnivamp: float = 0.0              # decimal (0.05 = 5%)
+    health_regen_per_sec: float = 0.0  # HP per second
     level: int = 1
     max_level: int = 20
     skill_points: int = 1  # Level 1 grants a skill point
@@ -145,7 +149,9 @@ class Champion:
                   bonus_HP: float = 0.0, bonus_AR: float = 0.0, bonus_MR: float = 0.0,
                   lethality: float = 0.0, armor_pen_pct: float = 0.0,
                   magic_pen_flat: float = 0.0, magic_pen_pct: float = 0.0,
-                  bonus_AS: float = 0.0):
+                  bonus_AS: float = 0.0,
+                  life_steal: float = 0.0, omnivamp: float = 0.0,
+                  health_regen_per_sec: float = 0.0):
         """Add bonus stats from items or buffs.
 
         Args:
@@ -159,6 +165,9 @@ class Champion:
             magic_pen_flat: Flat magic penetration
             magic_pen_pct: Percentage magic penetration (decimal, e.g. 0.40)
             bonus_AS: Bonus attack speed percentage (e.g. 35 for 35%)
+            life_steal: Life steal decimal (0.08 = 8%)
+            omnivamp: Omnivamp decimal (0.05 = 5%)
+            health_regen_per_sec: HP regen per second
         """
         self.bonus_AD += bonus_AD
         self.bonus_AP += bonus_AP
@@ -170,6 +179,9 @@ class Champion:
         self.magic_pen_flat += magic_pen_flat
         self.magic_pen_pct += magic_pen_pct
         self.bonus_AS += bonus_AS
+        self.life_steal += life_steal
+        self.omnivamp += omnivamp
+        self.health_regen_per_sec += health_regen_per_sec
         self.total_AD = self.base_AD + self.bonus_AD
         self.total_AP = self.base_AP + self.bonus_AP
         self.total_HP = self.base_HP + self.bonus_HP

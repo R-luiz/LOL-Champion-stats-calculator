@@ -6,7 +6,8 @@
       "mcp__claude_ai_sequencial_thinking__sequentialthinking",
       "Bash(python:*)",
       "Bash(gh pr list:*)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "WebFetch(domain:developer.riotgames.com)"
     ]
   }
 }

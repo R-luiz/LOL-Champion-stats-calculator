@@ -388,7 +388,7 @@ def _apply_action(
         s.r_cd_until = t + table.r_cd
         # R vitals appear 0.5s after cast; overrides normal vital timer
         s.next_vital_at = t + champion.R_VITAL_APPEAR_DELAY
-        s.actions.append((t, "R_ACTIVATE", 0.0, ["instant", "4-vitals"]))
+        s.actions.append((t, "R_ACTIVATE", 0.0, ["instant", "4-vitals"], 0.0))
         return s
 
     # ─── E_ACTIVATE (instant, no damage, resets AA timer) ───
@@ -398,10 +398,11 @@ def _apply_action(
         s.e_autos_remaining = 2
         s.e_expires_at = t + 4.0
         s.e_cd_until = t + table.e_cd
-        s.actions.append((t, "E_ACTIVATE", 0.0, ["instant", "AA-reset"]))
+        s.actions.append((t, "E_ACTIVATE", 0.0, ["instant", "AA-reset"], 0.0))
         return s
 
     # ─── DAMAGING ACTIONS ───
+    heal_before = s.healing_so_far
     damage = 0.0
     hit_time = t  # when damage actually lands (after windup/cast)
     notes = []
@@ -514,8 +515,20 @@ def _apply_action(
         shojin_granted = True
         notes.append(f"Shojin({s.shojin_stacks})")
 
+    # ─── Sustain healing (life steal + omnivamp) ───
+    ls = getattr(champion, 'life_steal', 0.0)
+    ov = getattr(champion, 'omnivamp', 0.0)
+    sustain_heal = 0.0
+    if is_on_hit and ls > 0 and damage > 0:
+        sustain_heal += damage * ls          # LS on AA physical damage only
+    if ov > 0 and total_action_damage > 0:
+        sustain_heal += total_action_damage * ov  # omnivamp on ALL damage
+    if sustain_heal > 0:
+        s.healing_so_far += round(sustain_heal, 2)
+
     s.damage_so_far += total_action_damage
-    s.actions.append((t, action, round(total_action_damage, 2), notes))
+    action_heal = round(s.healing_so_far - heal_before, 2)
+    s.actions.append((t, action, round(total_action_damage, 2), notes, action_heal))
     return s
 
 
@@ -646,15 +659,18 @@ def _greedy_search(
 def _format_result(state: DPSState, time_limit: float, method: str) -> Dict[str, Any]:
     """Format a DPSState into the output dict."""
     timeline = []
-    for (t, action, damage, notes) in state.actions:
+    for entry in state.actions:
+        t, action, damage, notes = entry[0], entry[1], entry[2], entry[3]
+        healing = entry[4] if len(entry) > 4 else 0.0
         timeline.append({
             "time": round(t, 3),
             "action": action,
             "damage": damage,
+            "healing": healing,
             "notes": ", ".join(notes) if notes else "",
         })
 
-    sequence = " > ".join(a for (_, a, _, _) in state.actions)
+    sequence = " > ".join(entry[1] for entry in state.actions)
     dps = round(state.damage_so_far / time_limit, 2) if time_limit > 0 else 0.0
 
     return {
@@ -732,6 +748,11 @@ def optimize_dps(
         else:
             result_state = _greedy_search(root, table, champion, rune, time_limit)
             method = "greedy"
+
+        # Passive health regeneration over the fight
+        hp_regen = getattr(champion, 'health_regen_per_sec', 0.0)
+        if hp_regen > 0:
+            result_state.healing_so_far += round(hp_regen * time_limit, 2)
     finally:
         if bonus_as > 0:
             champion.add_stats(bonus_AS=-bonus_as)
