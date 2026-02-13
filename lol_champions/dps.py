@@ -253,7 +253,7 @@ def build_damage_table(
                 burn = item.burn_damage(target)
                 table.liandry_burn = _amp(_mitigate(burn))
             elif isinstance(item, (SunfireAegis, HollowRadiance)):
-                table.immolate_dps += item.dps(champion)
+                table.immolate_dps += _amp(item.dps(champion))
             # Conditional
             elif isinstance(item, SunderedSky):
                 proc = item.proc_damage(champion, target)
@@ -548,7 +548,9 @@ def _apply_action(
     # ─── HYDRA_ACTIVE (instant, damages, resets AA timer) ───
     if action == "HYDRA_ACTIVE":
         heal_before = s.healing_so_far
-        damage = table.hydra_active_damage
+        # PtA exposure amplifies active item damage too
+        pta_amp = 1.08 if (rune and isinstance(rune, PressTheAttack) and s.pta_exposed) else 1.0
+        damage = round(table.hydra_active_damage * pta_amp, 2)
         s.ability_lock_until = t
         s.next_aa_at = t  # AA reset
         s.hydra_active_cd_until = t + table.hydra_active_cd
@@ -559,6 +561,9 @@ def _apply_action(
         if ov > 0 and damage > 0:
             action_heal = round(damage * ov, 2)
             s.healing_so_far += action_heal
+        # Update target current HP for BotRK tracking
+        if s.has_botrk:
+            s.target_current_hp = max(s.target_current_hp - damage, 0.0)
         s.actions.append((t, "HYDRA_ACTIVE", round(damage, 2),
                           [f"AA-reset", f"dmg({round(damage, 0):.0f})"], action_heal))
         return s
@@ -566,7 +571,9 @@ def _apply_action(
     # ─── STRIDEBREAKER (instant, damages) ───
     if action == "STRIDEBREAKER":
         heal_before = s.healing_so_far
-        damage = table.stridebreaker_damage
+        # PtA exposure amplifies active item damage too
+        pta_amp = 1.08 if (rune and isinstance(rune, PressTheAttack) and s.pta_exposed) else 1.0
+        damage = round(table.stridebreaker_damage * pta_amp, 2)
         s.ability_lock_until = t
         s.stridebreaker_cd_until = t + table.stridebreaker_cd
         s.damage_so_far += damage
@@ -575,6 +582,9 @@ def _apply_action(
         if ov > 0 and damage > 0:
             action_heal = round(damage * ov, 2)
             s.healing_so_far += action_heal
+        # Update target current HP for BotRK tracking
+        if s.has_botrk:
+            s.target_current_hp = max(s.target_current_hp - damage, 0.0)
         s.actions.append((t, "STRIDEBREAKER", round(damage, 2),
                           [f"dmg({round(damage, 0):.0f})"], action_heal))
         return s
@@ -632,21 +642,27 @@ def _apply_action(
         s.w_cd_until = t + table.w_cd
 
     # ─── ITEM PROCS ───
+    # PtA exposure amplifies ALL damage to the target (including item procs).
+    # Ability base damage already uses pre-computed _pta variants, so we only
+    # need to apply this multiplier to item proc damage added below.
+    pta_amp = 1.08 if (rune and isinstance(rune, PressTheAttack) and s.pta_exposed) else 1.0
 
     # BotRK on-hit: dynamic damage based on target current HP
     botrk_dmg = 0.0
     if s.has_botrk and is_on_hit and table.botrk_pct > 0:
-        botrk_dmg = s.target_current_hp * table.botrk_pct * table.botrk_phys_ratio
+        botrk_dmg = s.target_current_hp * table.botrk_pct * table.botrk_phys_ratio * pta_amp
         damage += botrk_dmg
         notes.append(f"BotRK({round(botrk_dmg, 0):.0f})")
 
     # On-hit bonus (Wit's End, Nashor's, Recurve, Terminus, Titanic passive)
     if is_on_hit and (table.on_hit_physical > 0 or table.on_hit_magic > 0):
-        damage += table.on_hit_physical + table.on_hit_magic
-        if table.on_hit_physical > 0:
-            notes.append(f"on-hit-P({round(table.on_hit_physical, 0):.0f})")
-        if table.on_hit_magic > 0:
-            notes.append(f"on-hit-M({round(table.on_hit_magic, 0):.0f})")
+        on_hit_p = round(table.on_hit_physical * pta_amp, 2)
+        on_hit_m = round(table.on_hit_magic * pta_amp, 2)
+        damage += on_hit_p + on_hit_m
+        if on_hit_p > 0:
+            notes.append(f"on-hit-P({round(on_hit_p, 0):.0f})")
+        if on_hit_m > 0:
+            notes.append(f"on-hit-M({round(on_hit_m, 0):.0f})")
 
     # Spellblade (Trinity Force / Iceborn / Lich Bane)
     if s.has_spellblade:
@@ -655,17 +671,19 @@ def _apply_action(
             s.spellblade_armed = True
         # Proc on on-hit action (Q both arms AND procs in same action)
         if is_on_hit and s.spellblade_armed:
-            damage += table.spellblade_damage
+            sb_dmg = round(table.spellblade_damage * pta_amp, 2)
+            damage += sb_dmg
             s.spellblade_armed = False
             s.spellblade_cd_until = hit_time + table.spellblade_cd
-            notes.append(f"Spellblade({round(table.spellblade_damage, 0):.0f})")
+            notes.append(f"Spellblade({round(sb_dmg, 0):.0f})")
 
     # Energized (Voltaic / RFC / Shiv / Stormrazor)
     if s.has_energized and is_on_hit:
         if s.energized_stacks >= s.energized_max:
-            damage += table.energized_damage
+            en_dmg = round(table.energized_damage * pta_amp, 2)
+            damage += en_dmg
             s.energized_stacks = 0
-            notes.append(f"Energized({round(table.energized_damage, 0):.0f})")
+            notes.append(f"Energized({round(en_dmg, 0):.0f})")
         s.energized_stacks = min(s.energized_stacks + s.energized_per_aa,
                                  s.energized_max)
 
@@ -673,26 +691,30 @@ def _apply_action(
     if s.has_kraken and is_on_hit:
         s.kraken_hits += 1
         if s.kraken_hits >= 3:
-            damage += table.kraken_proc
+            kr_dmg = round(table.kraken_proc * pta_amp, 2)
+            damage += kr_dmg
             s.kraken_hits = 0
-            notes.append(f"Kraken({round(table.kraken_proc, 0):.0f})")
+            notes.append(f"Kraken({round(kr_dmg, 0):.0f})")
 
     # Sundered Sky (first on-hit per 10s CD)
     if s.has_sundered_sky and is_on_hit and s.sundered_sky_cd_until <= t:
-        damage += table.sundered_sky_bonus
+        ss_dmg = round(table.sundered_sky_bonus * pta_amp, 2)
+        damage += ss_dmg
         s.sundered_sky_cd_until = hit_time + table.sundered_sky_cd
-        notes.append(f"SunderedSky({round(table.sundered_sky_bonus, 0):.0f})")
+        notes.append(f"SunderedSky({round(ss_dmg, 0):.0f})")
 
     # Dead Man's Plate (first hit only, full momentum)
     if s.has_dead_mans and is_on_hit and s.dead_mans_available:
-        damage += table.dead_mans_bonus
+        dm_dmg = round(table.dead_mans_bonus * pta_amp, 2)
+        damage += dm_dmg
         s.dead_mans_available = False
-        notes.append(f"DeadMans({round(table.dead_mans_bonus, 0):.0f})")
+        notes.append(f"DeadMans({round(dm_dmg, 0):.0f})")
 
     # Liandry's burn (on ability damage actions, not basic AA)
     if table.liandry_burn > 0 and action in ABILITY_DAMAGE_ACTIONS:
-        damage += table.liandry_burn
-        notes.append(f"Burn({round(table.liandry_burn, 0):.0f})")
+        lb_dmg = round(table.liandry_burn * pta_amp, 2)
+        damage += lb_dmg
+        notes.append(f"Burn({round(lb_dmg, 0):.0f})")
 
     # ─── VITAL PROC (uses hit_time for when damage actually lands) ───
     vital_damage = 0.0
@@ -1036,8 +1058,23 @@ def optimize_dps(
             method = "greedy"
 
         # Immolate aura damage (Sunfire Aegis / Hollow Radiance)
+        # PtA exposure also amplifies immolate; compute exposed duration
         if table.immolate_dps > 0:
-            result_state.damage_so_far += round(table.immolate_dps * time_limit, 2)
+            immolate_total = table.immolate_dps * time_limit
+            if result_state.pta_exposed:
+                # Find when PtA proc happened (3rd on-hit action)
+                on_hit_count = 0
+                pta_proc_time = 0.0
+                for entry in result_state.actions:
+                    act = entry[1]
+                    if act in ON_HIT_ACTIONS:
+                        on_hit_count += 1
+                        if on_hit_count == 3:
+                            pta_proc_time = entry[0]
+                            break
+                exposed_duration = time_limit - pta_proc_time
+                immolate_total += table.immolate_dps * exposed_duration * 0.08
+            result_state.damage_so_far += round(immolate_total, 2)
 
         # Passive health regeneration over the fight
         hp_regen = getattr(champion, 'health_regen_per_sec', 0.0)

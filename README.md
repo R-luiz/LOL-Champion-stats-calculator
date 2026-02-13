@@ -320,6 +320,184 @@ These are damage amplifiers that stack multiplicatively with keystones and each 
 
 **Spear of Shojin**: Focused Will grants a stack per ability cast (max 4). Each stack amplifies ability and proc damage by 3% (up to 12%). Does NOT amplify basic auto attacks. Does NOT grant stacks from passive procs. The triggering ability does NOT benefit from its own stack — the first ability cast deals unamplified damage, the second benefits from 1 stack, etc.
 
+## Item Proc System (29 Items)
+
+The damage engine models proc effects for 29 items across 8 categories. All procs are automatically integrated into the DPS optimizer and build optimizer — you only need to pass item instances and the engine handles proc timing, cooldowns, and stacking.
+
+### On-Hit Items
+| Item | Damage |
+|------|--------|
+| Blade of the Ruined King | 9% (melee) / 6% (ranged) target current HP as physical. **Dynamically tracks target HP** — damage decreases per hit as HP drops |
+| Wit's End | 45 bonus magic damage |
+| Nashor's Tooth | 15 + 15% AP magic damage |
+| Recurve Bow | 15 physical damage |
+| Terminus | 30 magic damage (Light/Dark alternation) |
+| Titanic Hydra | 5 + 1% max HP physical on-hit + active (10s CD) |
+
+### Stacking On-Hit
+| Item | Damage |
+|------|--------|
+| Kraken Slayer | Every 3rd hit: 150-210 (melee, scales with level) bonus physical |
+
+### Spellblade (Exclusive — max 1 per build)
+| Item | Damage |
+|------|--------|
+| Trinity Force | 200% base AD bonus physical (1.5s CD) |
+| Iceborn Gauntlet | 150% base AD bonus physical + slow (1.5s CD) |
+| Lich Bane | 75% base AD + 40% AP magic damage (1.5s CD) |
+
+### Energized (Stack from AAs, proc at 100 stacks)
+| Item | Damage |
+|------|--------|
+| Voltaic Cyclosword | 100 physical + slow |
+| Rapid Firecannon | 40 magic + bonus range |
+| Statikk Shiv | 60 magic, chain-lightning |
+| Stormrazor | 100 magic + bonus MS |
+
+### Active Items
+| Item | Damage |
+|------|--------|
+| Profane Hydra | 80% AD physical (10s CD, AA reset) |
+| Ravenous Hydra | 80% AD physical (10s CD, AA reset) |
+| Stridebreaker | 80% total AD physical (15s CD) |
+| Hextech Rocketbelt | 100 + 10% AP magic (40s CD) |
+| Everfrost | 300 + 85% AP magic (30s CD) |
+| Hextech Gunblade | 175-253 + 30% AP magic (40s CD) |
+
+### Burn / Immolate
+| Item | Damage |
+|------|--------|
+| Liandry's Torment | 6% target max HP magic per ability hit (over 3s) |
+| Sunfire Aegis | 20 + 1% bonus HP magic DPS aura (immolate, exclusive) |
+| Hollow Radiance | 15 + 1% bonus HP magic DPS aura (immolate, exclusive) |
+
+### Conditional
+| Item | Damage |
+|------|--------|
+| Sundered Sky | First AA vs champ: guaranteed crit + heal (10s CD) |
+| Dead Man's Plate | At full momentum: 40 + 120% base AD bonus physical (first hit only) |
+
+### Damage Amplifier
+| Item | Effect |
+|------|--------|
+| Lord Dominik's Regards | 0-15% increased damage vs champs based on bonus HP difference |
+| Spear of Shojin | 3% per stack (max 4) on ability/proc damage |
+
+### Stat-Only (No Proc)
+Death's Dance, Sterak's Gage, Maw of Malmortius, Guardian Angel, Experimental Hexplate — included in the build optimizer catalog for their raw stats.
+
+### Amplification Pipeline
+
+All item procs are correctly amplified by all damage sources:
+
+- **Static modifiers** (Last Stand, Coup de Grace, Cut Down): baked into all pre-computed proc values
+- **PtA exposure** (8% after 3 hits): applied dynamically to every item proc while target is exposed
+- **Immolate DPS**: amplified by both static modifiers and PtA (proportional to exposed duration)
+- **Conqueror bonus AD**: affects ability base damage at max stacks (item procs that don't scale with AD are unaffected, which is correct)
+- **Shojin stacks**: amplifies ability damage (Q/W/E) and vital true damage, not on-hit procs
+
+## Build Optimizer
+
+Automatically searches over item combinations to find the highest-DPS build for a given champion, target, and time window. All item stats and proc effects are applied and removed automatically per combination.
+
+### Usage
+
+```python
+from lol_champions import Fiora, Target, optimize_build
+from lol_champions.runes import PressTheAttack
+
+fiora = Fiora()
+for _ in range(10): fiora.level_up()
+for _ in range(5): fiora.level_ability('Q')
+fiora.level_ability('W')
+fiora.level_ability('E')
+fiora.level_ability('R')
+
+target = Target(max_hp=2000, armor=80, mr=50)
+
+# Find the best 2-item build in a 4s window
+builds = optimize_build(
+    champion=fiora, target=target, time_limit=4.0,
+    item_count=2, rune=PressTheAttack(),
+    pool=["Blade of the Ruined King", "Profane Hydra", "Trinity Force",
+          "Kraken Slayer", "Wit's End", "Spear of Shojin"],
+    top_n=5,
+)
+for i, b in enumerate(builds, 1):
+    print(f"  #{i}: {' + '.join(b['items'])}  —  {b['dps']} DPS")
+```
+
+### Parameters
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `champion` | required | Champion instance at desired level |
+| `target` | required | Target with HP/armor/MR |
+| `time_limit` | required | Combo duration in seconds |
+| `item_count` | required | Number of items to optimize (1-6) |
+| `rune` | None | Keystone rune instance |
+| `damage_modifiers` | None | Static amps (Last Stand, etc.) |
+| `pool` | all items | Whitelist of item names to consider |
+| `exclude` | None | Blacklist of item names |
+| `strategy` | "auto" | `"exhaustive"` / `"greedy"` / `"auto"` |
+| `top_n` | 5 | Number of top builds to return |
+| `r_active` | False | R pre-activated (4 vitals immediately) |
+
+### Search Strategies
+
+- **Exhaustive** (default for 1-3 items): tries every valid combination. Globally optimal but slower (~3-4 min for 3 items from 25 pool).
+- **Greedy** (default for 4-6 items): picks the best item per slot iteratively. Fast (~15s for 6 items) but may miss synergies.
+- **Auto**: selects exhaustive for ≤3 items, greedy for 4+.
+
+### Exclusive Groups
+
+The optimizer enforces item uniqueness constraints:
+- **Spellblade**: max 1 of Trinity Force / Iceborn Gauntlet / Lich Bane
+- **Hydra**: max 1 of Titanic / Profane / Ravenous Hydra / Tiamat
+- **Immolate**: max 1 of Sunfire Aegis / Hollow Radiance
+- No duplicate items
+
+### Item Catalog Validation
+
+Compare hardcoded item stats against Riot's Data Dragon to detect patch drift:
+
+```python
+from lol_champions import validate_catalog, DataDragon
+dd = DataDragon()
+validate_catalog(dd)  # prints warnings for any stat mismatches
+```
+
+## Logging
+
+Detailed calculation logs are saved to the `logs/` directory.
+
+### Single DPS Result
+
+```python
+from lol_champions import log_result
+path = log_result(result, champion=fiora, target=target,
+                  items=["BotRK", "Profane Hydra"], rune="PressTheAttack")
+```
+
+### Build Optimizer Results
+
+```python
+from lol_champions import log_build_results
+path = log_build_results(builds, champion=fiora, target=target,
+                         rune="PressTheAttack", time_limit=4.0)
+```
+
+### Log Format
+
+Logs include a full header (champion stats, ability ranks, target, rune), a rankings table for build optimizer runs, and per-action timelines with damage/healing breakdowns:
+
+```
+    0.00s  AA            dmg=  371.5  heal=  91.8  BotRK(111), vital(140.0)
+    0.95s  AA            dmg=  210.8  heal=  16.9  BotRK(90)
+    1.08s  HYDRA_ACTIVE  dmg=  104.0  heal=   0.0  AA-reset, dmg(104)
+    ...
+```
+
 ## LoL Damage Glossary
 
 These are the core terms used in the damage formulas (from the [LoL Wiki](https://wiki.leagueoflegends.com/en-us/)):
@@ -364,10 +542,16 @@ Example: 200 raw physical damage vs 100 armor = 200 * (100/200) = 100 damage tak
 ## Python API
 
 ```python
-from lol_champions import Fiora, Target, calculate_damage, calculate_combo, optimize_dps
+from lol_champions import (
+    Fiora, Target, calculate_damage, calculate_combo, optimize_dps,
+    optimize_build, validate_catalog, log_result, log_build_results,
+)
 from lol_champions.runes import PressTheAttack
 from lol_champions.runes import LastStand, CoupDeGrace, CutDown
-from lol_champions.items import SpearOfShojin
+from lol_champions.items import (
+    SpearOfShojin, BladeOfTheRuinedKing, TrinityForce,
+    ProfaneHydra, WitsEnd, KrakenSlayer,
+)
 
 fiora = Fiora()
 for _ in range(8): fiora.level_up()
@@ -398,15 +582,33 @@ combo = calculate_combo(
 print(combo["total_damage"])   # total combo damage including rune procs
 print(combo["total_healing"])  # total healing from vitals + rune
 
-# DPS optimizer: max damage in 5 seconds
+# DPS optimizer with item procs: Trinity + BotRK + Shojin
+items_list = [TrinityForce(), BladeOfTheRuinedKing(), SpearOfShojin()]
+fiora.add_stats(bonus_AD=35+40, bonus_HP=300, bonus_AS=33+25, life_steal=0.08)
 dps = optimize_dps(
-    fiora, target, time_limit=5.0, rune=pta, bonus_as=35,
-    damage_modifiers=mods, items=[SpearOfShojin(stacks=0)],
+    fiora, target, time_limit=5.0, rune=pta,
+    damage_modifiers=mods, items=items_list,
 )
 print(dps["total_damage"])     # optimal total damage
 print(dps["dps"])              # damage per second
 print(dps["sequence"])         # optimal action sequence
 print(dps["total_healing"])    # total healing (sustain + vitals + rune)
+fiora.add_stats(bonus_AD=-(35+40), bonus_HP=-300, bonus_AS=-(33+25), life_steal=-0.08)
+
+# Build optimizer: find best 2-item build automatically
+builds = optimize_build(
+    fiora, target, time_limit=5.0, item_count=2, rune=pta,
+    pool=["Trinity Force", "Blade of the Ruined King", "Profane Hydra",
+          "Kraken Slayer", "Wit's End", "Spear of Shojin"],
+)
+for b in builds:
+    print(f"  {' + '.join(b['items'])}  —  {b['dps']} DPS")
+
+# Log results to files
+log_result(dps, champion=fiora, target=target,
+           items=["Trinity Force", "BotRK"], rune="PressTheAttack")
+log_build_results(builds, champion=fiora, target=target,
+                  rune="PressTheAttack", time_limit=5.0)
 
 # Sustain stats: life steal, omnivamp, health regen
 fiora.add_stats(life_steal=0.10, omnivamp=0.05, health_regen_per_sec=8.5)
@@ -450,9 +652,13 @@ lol_champions/
   damage.py                     # Damage engine (penetration, mitigation, modifiers)
   dps.py                        # DPS optimizer (branch-and-bound / greedy)
   runes.py                      # Keystones + minor runes
-  items.py                      # Item passives (Spear of Shojin)
+  items.py                      # 29 item proc dataclasses (on-hit, spellblade, energized, burn, active, conditional)
+  build_optimizer.py            # Build optimizer (exhaustive / greedy search over item combinations)
+  logger.py                     # Detailed calculation logging to files
   live_client.py                # Riot Live Client Data API client
   data_dragon.py                # Data Dragon CDN fetcher + cache
+
+logs/                           # Generated calculation logs (git-ignored)
 ```
 
 ## Data Source
