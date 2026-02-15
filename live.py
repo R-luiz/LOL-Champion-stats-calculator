@@ -15,6 +15,7 @@ Usage:
 
 import argparse
 import io
+import msvcrt
 import os
 import sys
 import time
@@ -211,6 +212,76 @@ def _detect_items_from_playerlist(player_entry: dict, ddragon: DataDragon | None
             bonus_as += istats.get("attack_speed_pct", 0)
 
     return items_list, item_names, has_shojin, bonus_as
+
+
+def _calibrate_target(champ_name: str, level: int, enemy_entry: dict,
+                       ddragon: DataDragon) -> dict | None:
+    """Run interactive HP calibration for an enemy champion.
+
+    Shows a detailed breakdown of base HP and item HP, asks the user to
+    enter the actual max HP, then deduces the HP rune shard combo.
+
+    Returns:
+        Calibration dict or None if cancelled/failed.
+    """
+    try:
+        base_stats = ddragon.champion_stats_at_level(champ_name, level)
+        base_hp = base_stats["hp"]
+
+        # Per-item HP breakdown
+        enemy_items = enemy_entry.get("items", [])
+        item_hp_total = 0.0
+        item_hp_details = []
+        for it in enemy_items:
+            iid = it.get("itemID", 0)
+            iname = it.get("displayName", ddragon.item_name(iid))
+            istats = ddragon.item_stats(iid)
+            ihp = istats["hp"]
+            if ihp > 0:
+                item_hp_details.append((iname, ihp))
+            item_hp_total += ihp
+
+        estimate = base_hp + item_hp_total
+
+        # Show detailed breakdown
+        print(f"\n  Target: {champ_name} (Lv{level})")
+        print(f"  Base HP (Lv{level}):   {base_hp:>6.0f}")
+        if item_hp_details:
+            print(f"  Items:")
+            for iname, ihp in item_hp_details:
+                print(f"    {iname:<22} +{ihp:.0f}")
+            print(f"  Item HP total:     +{item_hp_total:>5.0f}")
+        else:
+            print(f"  Items:               (none with HP)")
+        print(f"  Estimated total:    {estimate:>6.0f}")
+
+        hp_input = input(f"  Enter {champ_name}'s actual max HP: ").strip()
+        actual_hp = float(hp_input)
+        residual = actual_hp - estimate
+        combo_idx, extra = _match_shard_combo(residual, level)
+
+        cal = {
+            "combo_idx": combo_idx,
+            "extra_hp": extra,
+            "actual_hp": actual_hp,
+            "cal_level": level,
+            "cal_base_hp": base_hp,
+        }
+
+        combo_name = _SHARD_COMBOS[combo_idx][0]
+        shard_hp = _shard_hp_at_level(combo_idx, level)
+        print(f"  Residual:            {residual:>6.0f}")
+        print(f"  -> Shards: {combo_name} ({shard_hp:.0f} at Lv{level})")
+        if abs(extra) > 5:
+            print(f"  -> Extra: {extra:+.0f} HP (passives/runes)")
+        time.sleep(1.5)
+        return cal
+
+    except ValueError:
+        print(f"  {champ_name} not found or invalid input")
+        return None
+    except (EOFError, KeyboardInterrupt):
+        return None
 
 
 def _build_target(args, enemy_entry: dict | None, ddragon: DataDragon | None,
@@ -663,7 +734,7 @@ def _display(fiora, target, target_label, keystone_name, minor_runes,
         print(f"  {seq}")
 
     print(f"\033[1m{'=' * 56}\033[0m")
-    print("  Ctrl+C to stop")
+    print("  \033[90m[r] recalibrate HP  |  Ctrl+C to stop\033[0m")
 
 
 def main():
@@ -745,28 +816,16 @@ def main():
                 champ_name = enemy.get("championName", "")
                 level = enemy.get("level", 1)
                 if champ_name and champ_name not in target_calibration:
-                    item_ids = [it["itemID"] for it in enemy.get("items", [])]
-                    try:
-                        raw = ddragon.estimate_target(champ_name, level, item_ids)
-                        print(f"\n  New target detected: {champ_name} (Lv{level})")
-                        print(f"  Base+items HP estimate: {raw.max_hp:.0f}")
-                        hp_input = input(f"  Enter {champ_name}'s actual max HP: ").strip()
-                        actual_hp = float(hp_input)
-                        residual = actual_hp - raw.max_hp
-                        combo_idx, extra = _match_shard_combo(residual, level)
+                    print(f"\n  New target detected: {champ_name}")
+                    cal = _calibrate_target(champ_name, level, enemy, ddragon)
+                    if cal:
+                        target_calibration[champ_name] = cal
+                    else:
+                        # Fallback default
                         target_calibration[champ_name] = {
-                            "combo_idx": combo_idx, "extra_hp": extra,
-                        }
-                        combo_name = _SHARD_COMBOS[combo_idx][0]
-                        msg = f"  -> Shards: {combo_name}"
-                        if abs(extra) > 5:
-                            msg += f" + {extra:.0f} extra HP (passives/runes)"
-                        print(msg)
-                        time.sleep(1.5)
-                    except (ValueError, EOFError):
-                        # Bad input or skipped — fall back to common default
-                        target_calibration[champ_name] = {
-                            "combo_idx": 3, "extra_hp": 0,  # scaling + flat 65
+                            "combo_idx": 3, "extra_hp": 0,
+                            "actual_hp": 0, "cal_level": level,
+                            "cal_base_hp": 0,
                         }
                         print("  -> Using default estimate (scaling + flat 65)")
                         time.sleep(1)
@@ -846,7 +905,23 @@ def main():
                 dps_result, kill_result, enemy_reductions,
             )
 
-            time.sleep(args.interval)
+            # Wait for interval, checking for 'r' key to recalibrate
+            deadline = time.time() + args.interval
+            while time.time() < deadline:
+                if msvcrt.kbhit():
+                    key = msvcrt.getch()
+                    if key == b'r' and enemy and ddragon:
+                        champ_name = enemy.get("championName", "")
+                        level = enemy.get("level", 1)
+                        cal = _calibrate_target(champ_name, level, enemy, ddragon)
+                        if cal:
+                            target_calibration[champ_name] = cal
+                            print("  Recalibrated!")
+                        else:
+                            print("  Recalibration cancelled.")
+                        time.sleep(1)
+                        break
+                time.sleep(0.1)
 
     except KeyboardInterrupt:
         print("\nStopped.")
