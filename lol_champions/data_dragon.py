@@ -168,6 +168,45 @@ class DataDragon:
             mr=base["mr"] + bonus_mr,
         )
 
+    def champion_abilities(self, name: str) -> list[dict]:
+        """Fetch ability cooldown data for a champion.
+
+        Downloads the individual champion JSON from Data Dragon CDN
+        (contains spells with per-rank cooldowns, unlike the summary
+        champion.json which only has base stats).
+
+        Args:
+            name: Champion name (case-insensitive, e.g. "Darius", "Dr. Mundo").
+
+        Returns:
+            List of 4 dicts (Q, W, E, R), each with:
+                name: str — ability display name
+                cooldown: list[float] — cooldown per rank
+        """
+        # Resolve the ddragon key for this champion
+        champ = self._find_champion(name)
+        if champ is None:
+            raise ValueError(f"Champion '{name}' not found in Data Dragon")
+        champ_key = champ["id"]  # e.g. "DrMundo", "MasterYi"
+
+        # Check cache
+        cache_file = self._cache_path / f"champion_{champ_key}.json"
+        if cache_file.exists():
+            with open(cache_file) as f:
+                full_data = json.load(f)
+        else:
+            url = (f"{DDRAGON_BASE}/cdn/{self.version}/data/en_US"
+                   f"/champion/{champ_key}.json")
+            full_data = _fetch_json(url)
+            with open(cache_file, "w") as f:
+                json.dump(full_data, f)
+
+        spells = full_data["data"][champ_key]["spells"]
+        return [
+            {"name": s["name"], "cooldown": s["cooldown"]}
+            for s in spells[:4]
+        ]
+
     def _find_champion(self, name: str):
         """Find champion data by name (case-insensitive)."""
         # ddragon keys are like "Fiora", "Darius", "MasterYi"

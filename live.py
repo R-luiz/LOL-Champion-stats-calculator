@@ -14,11 +14,14 @@ Usage:
 """
 
 import argparse
+import ctypes
+import ctypes.wintypes
 import io
-import msvcrt
 import os
 import sys
+import threading
 import time
+from collections import deque
 from contextlib import redirect_stdout
 
 from lol_champions import Fiora, Target, calculate_damage, optimize_dps, ITEM_ID_TO_PROC
@@ -51,6 +54,120 @@ MINOR_RUNE_MAP = {
 # Does NOT reduce spells (Q, W) or on-hit procs (BotRK, Vital, etc.)
 STEELCAPS_ITEM_ID = 3047
 STEELCAPS_REDUCTION = 0.12  # 12% basic attack damage reduction
+
+# ─── Enemy ability haste estimation ───────────────────────────────────
+# Ability haste per item (not in ddragon stats field, hardcoded from wiki)
+ITEM_ABILITY_HASTE = {
+    3133: 10,   # Caulfield's Warhammer
+    3108: 10,   # Fiendish Codex
+    3067: 10,   # Kindlegem
+    3024: 10,   # Glacial Buckler
+    3161: 25,   # Spear of Shojin (basic ability haste)
+    3078: 20,   # Trinity Force
+    6631: 20,   # Stridebreaker
+    3071: 20,   # Black Cleaver
+    6694: 20,   # Serylda's Grudge
+    6692: 20,   # Eclipse
+    3142: 20,   # Youmuu's Ghostblade
+    6701: 20,   # Opportunity
+    3110: 20,   # Frozen Heart
+    3065: 10,   # Spirit Visage
+    3083: 10,   # Warmog's Armor
+    3143: 10,   # Randuin's Omen
+    6665: 10,   # Jak'Sho
+    3742: 10,   # Dead Man's Plate
+    3068: 10,   # Sunfire Aegis
+    6664: 10,   # Hollow Radiance
+    3152: 20,   # Hextech Rocketbelt
+    3118: 25,   # Malignance
+    3157: 20,   # Zhonya's Hourglass
+    3102: 10,   # Banshee's Veil
+    4629: 25,   # Cosmic Drive
+    6653: 20,   # Liandry's Torment
+    3100: 10,   # Lich Bane
+    6655: 20,   # Luden's Companion
+    3003: 20,   # Archangel's Staff
+}
+
+# ─── Global keyboard hook (WH_KEYBOARD_LL) ─────────────────────────
+# Captures key presses system-wide, even when League has focus.
+# Runs in a background thread with its own Windows message pump.
+
+_VK_ACTIONS = {
+    0x70: "F1",   # VK_F1 → enemy Q
+    0x71: "F2",   # VK_F2 → enemy W
+    0x72: "F3",   # VK_F3 → enemy E
+    0x73: "F4",   # VK_F4 → enemy R
+    0x74: "F5",   # VK_F5 → recalibrate
+}
+_FKEY_TO_SLOT = {"F1": "Q", "F2": "W", "F3": "E", "F4": "R"}
+
+# Thread-safe queue of pressed action names
+_key_events: deque[str] = deque()
+
+# Low-level keyboard hook types
+_WH_KEYBOARD_LL = 13
+_WM_KEYDOWN = 0x0100
+
+_HOOKPROC = ctypes.CFUNCTYPE(
+    ctypes.wintypes.LPARAM,
+    ctypes.c_int,
+    ctypes.wintypes.WPARAM,
+    ctypes.wintypes.LPARAM,
+)
+
+# Fix argtypes for 64-bit Windows — lParam is a pointer-sized value
+_CallNextHookEx = ctypes.windll.user32.CallNextHookEx
+_CallNextHookEx.argtypes = [
+    ctypes.wintypes.HHOOK, ctypes.c_int,
+    ctypes.wintypes.WPARAM, ctypes.wintypes.LPARAM,
+]
+_CallNextHookEx.restype = ctypes.wintypes.LPARAM
+
+
+def _ll_keyboard_proc(nCode, wParam, lParam):
+    """Low-level keyboard hook callback."""
+    if nCode >= 0 and wParam == _WM_KEYDOWN:
+        # lParam points to KBDLLHOOKSTRUCT, first field is vkCode (DWORD)
+        vk_code = ctypes.cast(lParam, ctypes.POINTER(ctypes.wintypes.DWORD))[0]
+        action = _VK_ACTIONS.get(vk_code)
+        if action:
+            _key_events.append(action)
+    return _CallNextHookEx(None, nCode, wParam, lParam)
+
+
+# Must keep a reference to prevent garbage collection
+_hook_proc_ref = _HOOKPROC(_ll_keyboard_proc)
+
+
+def _start_keyboard_hook():
+    """Install a global low-level keyboard hook in a background thread."""
+    def _hook_thread():
+        hook = ctypes.windll.user32.SetWindowsHookExW(
+            _WH_KEYBOARD_LL, _hook_proc_ref, None, 0
+        )
+        if not hook:
+            return
+        # Message pump — required for the hook to receive events
+        msg = ctypes.wintypes.MSG()
+        while ctypes.windll.user32.GetMessageW(ctypes.byref(msg), None, 0, 0) > 0:
+            ctypes.windll.user32.TranslateMessage(ctypes.byref(msg))
+            ctypes.windll.user32.DispatchMessageW(ctypes.byref(msg))
+        ctypes.windll.user32.UnhookWindowsHookEx(hook)
+
+    t = threading.Thread(target=_hook_thread, daemon=True)
+    t.start()
+
+
+def _drain_key_events() -> list[str]:
+    """Return and clear all pending key events."""
+    events = []
+    while _key_events:
+        try:
+            events.append(_key_events.popleft())
+        except IndexError:
+            break
+    return events
 
 # ─── Rune stat shard HP estimation ───────────────────────────────────
 # The Live Client API doesn't expose enemy stat shards.  On first
@@ -388,6 +505,72 @@ def _detect_enemy_reductions(enemy_entry: dict | None) -> dict:
     return result
 
 
+def _estimate_ability_ranks(level: int) -> tuple:
+    """Estimate enemy ability ranks from their level.
+
+    Returns (q_rank, w_rank, e_rank, r_rank).
+    Assumes a generic skill order: max one basic ability first,
+    R at 6/11/16, rest spread evenly among other two.
+    """
+    if level <= 0:
+        return (0, 0, 0, 0)
+
+    # R rank
+    r_rank = 0
+    if level >= 16:
+        r_rank = 3
+    elif level >= 11:
+        r_rank = 2
+    elif level >= 6:
+        r_rank = 1
+
+    # Remaining points for Q/W/E
+    basic_points = level - r_rank
+    # Simulate typical leveling: players learn all 3 by level 3,
+    # then prioritize one ability. Distribute round-robin with priority weighting.
+    # Order of picks: Q, W, E, Q, Q, (R), Q, W, E, Q, (R), W, E, Q*, W, (R), E, W
+    # Simplified: first 3 points go one each, then primary gets priority.
+    q, w, e = 0, 0, 0
+    for pt in range(1, basic_points + 1):
+        # First 3 points: one per ability
+        if pt <= 3:
+            if pt == 1:
+                q += 1
+            elif pt == 2:
+                w += 1
+            else:
+                e += 1
+        else:
+            # After initial 3, prioritize Q, then alternate W/E
+            if q < 5 and q <= w + e:
+                q += 1
+            elif w < 5 and w <= e:
+                w += 1
+            elif e < 5:
+                e += 1
+            elif q < 5:
+                q += 1
+            elif w < 5:
+                w += 1
+    return (q, w, e, r_rank)
+
+
+def _estimate_enemy_ability_haste(enemy_entry: dict | None) -> int:
+    """Estimate enemy ability haste from their items."""
+    if not enemy_entry:
+        return 0
+    total = 0
+    for item in enemy_entry.get("items", []):
+        iid = item.get("itemID", 0)
+        total += ITEM_ABILITY_HASTE.get(iid, 0)
+    return total
+
+
+def _effective_cd(base_cd: float, ability_haste: int) -> float:
+    """Compute effective cooldown after ability haste reduction."""
+    return base_cd * 100 / (100 + ability_haste)
+
+
 def _build_modifiers(fiora, target, minor_runes: set,
                      current_hp: float, max_hp: float) -> list:
     """Build damage_modifiers list from detected minor runes."""
@@ -590,7 +773,8 @@ def _format_time(seconds: float) -> str:
 
 def _display(fiora, target, target_label, keystone_name, minor_runes,
              current_hp, max_hp, item_names, damages, game_time,
-             dps_result=None, kill_result=None, enemy_reductions=None):
+             dps_result=None, kill_result=None, enemy_reductions=None,
+             enemy_abilities=None, enemy_ah=0, cd_tracker=None):
     """Clear screen and print formatted damage summary."""
     # Clear screen
     os.system('cls' if os.name == 'nt' else 'clear')
@@ -647,6 +831,38 @@ def _display(fiora, target, target_label, keystone_name, minor_runes,
     if enemy_reductions and enemy_reductions.get("notes"):
         notes = ", ".join(enemy_reductions["notes"])
         print(f"  \033[90mReductions: {notes}\033[0m")
+
+    # Enemy ability cooldowns
+    if enemy_abilities:
+        ah_str = f" (AH: {enemy_ah})" if enemy_ah > 0 else ""
+        print(f"  \033[90mAbilities{ah_str}:\033[0m")
+        for i, ab in enumerate(enemy_abilities):
+            slot = "QWER"[i]
+            name = ab["name"][:14]
+            cds = ab["cooldown"]
+            # Use estimated rank (stored as extra field)
+            rank = ab.get("est_rank", 0)
+            if rank > 0 and rank <= len(cds):
+                base_cd = cds[rank - 1]
+                eff_cd = _effective_cd(base_cd, enemy_ah)
+            else:
+                eff_cd = 0
+
+            # Check CD tracker for countdown
+            if cd_tracker and cd_tracker.get(slot) is not None and eff_cd > 0:
+                elapsed = game_time - cd_tracker[slot]
+                remaining = eff_cd - elapsed
+                if remaining > 0:
+                    status = f"\033[31m{remaining:>5.1f}s\033[0m"
+                else:
+                    status = f"\033[32m   UP\033[0m"
+                    cd_tracker[slot] = None  # auto-clear expired CD
+            else:
+                status = f"\033[32m   UP\033[0m"
+
+            rank_str = f"R{rank}" if rank > 0 else "?"
+            cd_str = f"{eff_cd:>5.1f}s" if eff_cd > 0 else "  n/a"
+            print(f"    {slot} {name:<14} {cd_str} ({rank_str})  {status}")
     print(f"{'-' * 56}")
 
     # Damage values
@@ -734,7 +950,7 @@ def _display(fiora, target, target_label, keystone_name, minor_runes,
         print(f"  {seq}")
 
     print(f"\033[1m{'=' * 56}\033[0m")
-    print("  \033[90m[r] recalibrate HP  |  Ctrl+C to stop\033[0m")
+    print("  \033[90m[F1-F4] enemy Q/W/E/R  |  [F5] recalibrate  |  Ctrl+C stop\033[0m")
 
 
 def main():
@@ -749,11 +965,14 @@ def main():
                    help="Manual target armor override")
     p.add_argument("--target-mr", type=float, default=None,
                    help="Manual target MR override")
-    p.add_argument("--interval", type=float, default=2.0,
-                   help="Poll interval in seconds (default: 2)")
+    p.add_argument("--interval", type=float, default=1.0,
+                   help="Poll interval in seconds (default: 1.0)")
     p.add_argument("--time", type=float, default=None,
                    help="Also run DPS optimizer with this time window")
     args = p.parse_args()
+
+    # Start global keyboard hook (captures F1-F5 even when game has focus)
+    _start_keyboard_hook()
 
     # Wait for game
     print("Waiting for game to start...")
@@ -771,6 +990,11 @@ def main():
 
     # Calibration cache: {champ_name: {"combo_idx": int, "extra_hp": float}}
     target_calibration = {}
+
+    # Enemy ability CD tracker: {slot: game_time_when_used}
+    cd_tracker = {"Q": None, "W": None, "E": None, "R": None}
+    # Cached enemy abilities: {champ_name: [ability_dicts]}
+    enemy_abilities_cache = {}
 
     # Main poll loop
     try:
@@ -898,22 +1122,50 @@ def main():
             except Exception:
                 pass
 
+            # Fetch enemy ability data + estimate ranks
+            enemy_abilities = None
+            enemy_ah = 0
+            if enemy and ddragon:
+                champ_name = enemy.get("championName", "")
+                enemy_level = enemy.get("level", 1)
+                enemy_ah = _estimate_enemy_ability_haste(enemy)
+
+                if champ_name not in enemy_abilities_cache:
+                    try:
+                        enemy_abilities_cache[champ_name] = ddragon.champion_abilities(champ_name)
+                    except (ValueError, Exception):
+                        enemy_abilities_cache[champ_name] = None
+
+                raw_abilities = enemy_abilities_cache.get(champ_name)
+                if raw_abilities:
+                    ranks = _estimate_ability_ranks(enemy_level)
+                    enemy_abilities = []
+                    for i, ab in enumerate(raw_abilities):
+                        enemy_abilities.append({
+                            **ab,
+                            "est_rank": ranks[i],
+                        })
+
             # Display
             _display(
                 fiora, target, target_label, keystone_name, minor_runes,
                 current_hp, max_hp, item_names, damages, game_time,
                 dps_result, kill_result, enemy_reductions,
+                enemy_abilities, enemy_ah, cd_tracker,
             )
 
-            # Wait for interval, checking for 'r' key to recalibrate
+            # Wait for interval, processing key events from global hook
             deadline = time.time() + args.interval
             while time.time() < deadline:
-                if msvcrt.kbhit():
-                    key = msvcrt.getch()
-                    if key == b'r' and enemy and ddragon:
+                for ev in _drain_key_events():
+                    slot = _FKEY_TO_SLOT.get(ev)
+                    if slot and game_time > 0:
+                        cd_tracker[slot] = game_time
+                    elif ev == "F5" and enemy and ddragon:
                         champ_name = enemy.get("championName", "")
                         level = enemy.get("level", 1)
-                        cal = _calibrate_target(champ_name, level, enemy, ddragon)
+                        cal = _calibrate_target(
+                            champ_name, level, enemy, ddragon)
                         if cal:
                             target_calibration[champ_name] = cal
                             print("  Recalibrated!")
@@ -921,11 +1173,35 @@ def main():
                             print("  Recalibration cancelled.")
                         time.sleep(1)
                         break
-                time.sleep(0.1)
+                time.sleep(0.05)
 
     except KeyboardInterrupt:
         print("\nStopped.")
 
 
+def _ensure_admin():
+    """Re-launch as administrator if not already elevated.
+
+    Required because Vanguard (League anti-cheat) runs the game at high
+    integrity level, and Windows UIPI blocks keyboard hooks from
+    non-elevated processes.
+    """
+    if ctypes.windll.shell32.IsUserAnAdmin():
+        return  # already admin
+    # Re-launch this script with admin privileges (triggers UAC prompt)
+    import subprocess
+    script = os.path.abspath(sys.argv[0])
+    args = " ".join(sys.argv[1:])
+    # Use subprocess so we can wait and keep the console open
+    ret = ctypes.windll.shell32.ShellExecuteW(
+        None, "runas", sys.executable, f'"{script}" {args}', None, 1
+    )
+    if ret > 32:  # success — the elevated process is running
+        sys.exit(0)
+    # If UAC was denied or failed, continue without admin
+    print("WARNING: Not running as admin — F-key detection may not work in-game.")
+
+
 if __name__ == "__main__":
+    _ensure_admin()
     main()
